@@ -9,7 +9,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 5885915596685415092}
-  - component: {fileID: 4398680486759317632}
+  - component: {fileID: 5374360146855836318}
   m_Layer: 0
   m_Name: ShaderAssemblagePrefab
   m_TagString: Untagged
@@ -32,7 +32,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &4398680486759317632
+--- !u!114 &5374360146855836318
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -41,9 +41,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 5338212633210412886}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 25461922bcf392c488604e2992474880, type: 3}
+  m_Script: {fileID: 11500000, guid: a05bd24b4e26aa449ba49d5e21d7b6ab, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Rudi.ShaderAssemblage
+  m_EditorClassIdentifier: Rudis UI Extensions::Rudi.Core.ShaderAssemblage
   m_ShaderFolder: {fileID: 102900000, guid: d34155716e7e1c2499ff2b365f2f9a0f, type: 3}
   m_Shaders:
     Values:
