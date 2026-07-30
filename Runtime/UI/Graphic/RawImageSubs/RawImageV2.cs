@@ -1331,11 +1331,12 @@ namespace Rudi.UI
             base.OnValidate ();
             UnityEditor.EditorApplication.delayCall += () =>
             {
-                m_DropShadow.canSink = true;
                 m_DropShadow.setObject ( this );
+                m_DropShadow.canSink = true;
                 m_DropShadow.updated ();
                 Log.i ( TAG , "brighteningWithBlur = " + shadowProperties.brighteningWithBlur );
                 Log.i ( TAG , "shadowAlpha = " + shadowProperties.shadowAlpha );
+                Log.i ( TAG , "sigma = " + shadowProperties.sigma );
                 if ( null != m_MaterialRoundedCorner && !material.shader.name.Equals ( materialName ) )
                 {
                     Utils.DestroyObjectAndZero ( ref m_MaterialRoundedCorner );
