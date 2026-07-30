@@ -8,7 +8,7 @@ using Rudi.UI;
 
 namespace Rudi
 {
-	///*
+    ///*
     public static class DefaultControls
     {
 #if UNITY_EDITOR
@@ -21,12 +21,12 @@ namespace Rudi
         //private const float  kLindsayHeight =  28f ;
         private static readonly Vector2 s_ThickElementSize       = new Vector2 ( kWidth , kThickHeight   ) ;
         private static readonly Vector2 s_ThinElementSize        = new Vector2 ( kWidth , kThinHeight    ) ;
-        //private static readonly Vector2 s_LindsayElementSize     = new Vector2 ( kWidth , kLindsayHeight ) ;
+        //private static readonly Vector2 s_LindsayElementSize   = new Vector2 ( kWidth , kLindsayHeight ) ;
         private static readonly Vector2 s_ImageElementSize       = new Vector2 ( 100f , 100f ) ;
         private static readonly Color   s_DefaultSelectableColor = new Color32 ( 255 , 255 , 255 , 255 ) ;
         private static readonly Color   s_PanelColor             = new Color32 ( 255 , 255 , 255 , 100 ) ;
         private static readonly Color   s_TextColor              = new Color32 (  50 ,  50 ,  50 , 255 ) ;
-        private static readonly Color   s_DefaultBorderColor            = new Color32 (  220 ,  220 ,  223 , 255 ) ;
+        private static readonly Color   s_DefaultBorderColor     = new Color32 (  220 ,  220 ,  223 , 255 ) ;
         // helper functions
         static bool hasSelectionCanvas () => Selection.activeGameObject && Selection.activeGameObject.GetComponentInParent < Canvas > () ;
 
