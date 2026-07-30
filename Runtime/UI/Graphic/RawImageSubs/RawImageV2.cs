@@ -1329,13 +1329,18 @@ namespace Rudi.UI
         protected override void OnValidate ()
         {
             base.OnValidate ();
-            m_DropShadow.canSink = true;
-            m_DropShadow.setObject ( this );
-            m_DropShadow.updated ();
-            if ( null != m_MaterialRoundedCorner && !material.shader.name.Equals ( materialName ) )
+            UnityEditor.EditorApplication.delayCall += () =>
             {
-                Utils.DestroyObjectAndZero ( ref m_MaterialRoundedCorner );
-            }
+                m_DropShadow.canSink = true;
+                m_DropShadow.setObject ( this );
+                m_DropShadow.updated ();
+                Log.i ( TAG , "brighteningWithBlur = " + shadowProperties.brighteningWithBlur );
+                Log.i ( TAG , "shadowAlpha = " + shadowProperties.shadowAlpha );
+                if ( null != m_MaterialRoundedCorner && !material.shader.name.Equals ( materialName ) )
+                {
+                    Utils.DestroyObjectAndZero ( ref m_MaterialRoundedCorner );
+                }
+            };
         }
         [ContextMenu ( "Reset Shadow Properties" )]
         public void ResetShadowProperties ()
