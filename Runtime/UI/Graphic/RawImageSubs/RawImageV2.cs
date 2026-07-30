@@ -1309,8 +1309,8 @@ namespace Rudi.UI
             base.Start ();
             m_Started = true;
             startOutstandingTextureLoad ();
-            m_DropShadow.canSink = true;
             m_DropShadow.setObject ( this );
+            m_DropShadow.canSink = true;
             m_DropShadow.OnEnable ();
         }
 
