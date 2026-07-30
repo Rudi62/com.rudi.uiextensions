@@ -1307,8 +1307,8 @@ namespace Rudi.UI
         protected override void Awake ()
         {
             base.Awake ();
-            m_DropShadow.setObject ( this );
             m_DropShadow.canSink = true;
+            m_DropShadow.setObject ( this );
         }
         protected override void Start ()
         {
@@ -1333,19 +1333,19 @@ namespace Rudi.UI
         protected override void OnValidate ()
         {
             base.OnValidate ();
-            UnityEditor.EditorApplication.delayCall += () =>
-            {
-                m_DropShadow.setObject ( this );
-                m_DropShadow.canSink = true;
-                m_DropShadow.updated ();
-                Log.i ( TAG , "brighteningWithBlur = " + shadowProperties.brighteningWithBlur );
-                Log.i ( TAG , "shadowAlpha = " + shadowProperties.shadowAlpha );
-                Log.i ( TAG , "sigma = " + shadowProperties.sigma );
-                if ( null != m_MaterialRoundedCorner && !material.shader.name.Equals ( materialName ) )
-                {
-                    Utils.DestroyObjectAndZero ( ref m_MaterialRoundedCorner );
-                }
-            };
+            m_DropShadow.canSink = true;
+            m_DropShadow.setObject ( this );
+            m_DropShadow.updated ();
+            //UnityEditor.EditorApplication.delayCall += () =>
+            //{
+            //    //Log.i ( TAG , "brighteningWithBlur = " + shadowProperties.brighteningWithBlur );
+            //    //Log.i ( TAG , "shadowAlpha = " + shadowProperties.shadowAlpha );
+            //    //Log.i ( TAG , "sigma = " + shadowProperties.sigma );
+            //    //if ( null != m_MaterialRoundedCorner && !material.shader.name.Equals ( materialName ) )
+            //    //{
+            //    //    Utils.DestroyObjectAndZero ( ref m_MaterialRoundedCorner );
+            //    //}
+            //};
         }
         [ContextMenu ( "Reset Shadow Properties" )]
         public void ResetShadowProperties ()
