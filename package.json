@@ -1,0 +1,11 @@
+{
+  "name": "com.rudi.uiextensions",
+  "version": "1.0.0",
+  "displayName": "Rudis UI Extensions",
+  "description": "Schatten-Effekte, Glaselemente und UI-Shader.",
+  "unity": "6000.0",
+  "author": {
+    "name": "Rudi Weinacker"
+  },
+  "dependencies": {}
+}
