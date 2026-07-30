@@ -1304,13 +1304,17 @@ namespace Rudi.UI
             m_DropShadow.OnDisable ();
         }
 
+        protected override void Awake ()
+        {
+            base.Awake ();
+            m_DropShadow.setObject ( this );
+            m_DropShadow.canSink = true;
+        }
         protected override void Start ()
         {
             base.Start ();
             m_Started = true;
             startOutstandingTextureLoad ();
-            m_DropShadow.setObject ( this );
-            m_DropShadow.canSink = true;
             m_DropShadow.OnEnable ();
         }
 
