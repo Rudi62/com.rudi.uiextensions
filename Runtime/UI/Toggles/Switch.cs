@@ -10,7 +10,7 @@ using Rudi.Extensions;
 
 namespace Rudi.UI
 {
-    [ExecuteAlways]
+	[ExecuteAlways]
     [RequireComponent ( typeof ( RectTransform ) )]
     [AddComponentMenu ( "Rudi/UI/Switch" )]
 
