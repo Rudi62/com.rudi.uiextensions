@@ -8,7 +8,7 @@ using Rudi.UI;
 
 namespace Rudi
 {
-    /*
+	///*
     public static class DefaultControls
     {
 #if UNITY_EDITOR
@@ -248,7 +248,7 @@ namespace Rudi
         const int Priority = 8 ;
 
         // menu lines
-        const string MenuLineUI = "GameObject/UI (Canvas)/Rudi (Package)/" ;
+        const string MenuLineUI = "GameObject/UI (Canvas)/Rudis UI Extensions/" ;
 
         const string NameSwitch          = "Switch"            ;
         const string NameSwitchShadowed  = "Switch (Shadowed)" ;
@@ -306,13 +306,13 @@ namespace Rudi
         [ MenuItem ( MenuLineUI + NameSwitchShadowed , true  , Priority + 2 ) ] static bool ValiateSwitchSh () => hasSelectionCanvas () ;
         [ MenuItem ( MenuLineUI + NameSwitchShadowed , false , Priority + 2 ) ] static void MenuSwitchSh ( MenuCommand menuCommand ) => CreateControl ( menuCommand , CreateSwitch ( true ) ) ;
 
-        // switch Lindsay
-        [ MenuItem ( MenuLineUI + NameSwitchLindsayL , true , Priority + 3 ) ] static bool ValiateSwitchLindsay () => hasSelectionCanvas () ;
-        [ MenuItem ( MenuLineUI + NameSwitchLindsayL , false , Priority + 3 ) ] static void MenuSwitchLindsay ( MenuCommand menuCommand ) => CreateControl ( menuCommand , CreateSwitchLindsay ( true ) ) ;
+        //// switch Lindsay
+        //[ MenuItem ( MenuLineUI + NameSwitchLindsayL , true , Priority + 3 ) ] static bool ValiateSwitchLindsay () => hasSelectionCanvas () ;
+        //[ MenuItem ( MenuLineUI + NameSwitchLindsayL , false , Priority + 3 ) ] static void MenuSwitchLindsay ( MenuCommand menuCommand ) => CreateControl ( menuCommand , CreateSwitchLindsay ( true ) ) ;
 
-        // switch Lindsay
-        [ MenuItem ( MenuLineUI + NameSwitchLindsayNL , true  , Priority + 4 ) ] static bool ValiateSwitchLindsayNL () => hasSelectionCanvas () ;
-        [ MenuItem ( MenuLineUI + NameSwitchLindsayNL , false , Priority + 4 ) ] static void MenuSwitchLindsayNL ( MenuCommand menuCommand ) => CreateControl ( menuCommand , CreateSwitchLindsay ( false ) ) ;
+        //// switch Lindsay
+        //[ MenuItem ( MenuLineUI + NameSwitchLindsayNL , true  , Priority + 4 ) ] static bool ValiateSwitchLindsayNL () => hasSelectionCanvas () ;
+        //[ MenuItem ( MenuLineUI + NameSwitchLindsayNL , false , Priority + 4 ) ] static void MenuSwitchLindsayNL ( MenuCommand menuCommand ) => CreateControl ( menuCommand , CreateSwitchLindsay ( false ) ) ;
 
         // shadowed button
         [ MenuItem ( MenuLineUI + NameShadowedButton , true  , Priority + 5 ) ] static bool ValiateShadowedButton () => hasSelectionCanvas () ;
@@ -574,54 +574,54 @@ namespace Rudi
             return root ;
         }
 
-        // switch
-        static GameObject CreateSwitchLindsay ( bool has_label = true )
-        {
-            //  Lindsay:    Unity:
-            //  53 x 32     50 x 28
-            Vector2 ElementSize = has_label ? s_ThickElementSize : new Vector2 ( 50 , 28 ) ;
-            GameObject root = null ;
-            GameObject SlotParent = null ;
-            if ( has_label )
-            {
-                root = CreateUIElementRoot ( NameSwitch , s_ThickElementSize , typeof ( Switch ) , typeof ( AutoColorSwitch ) , typeof ( SelectableAdds ) ) ;
-                // slot box / knob
-                var SlotBoxKnob = root.createChild ( "Box Slot Knob" , typeof ( RectSizeNotifier ) ) ;
-                SetLeftCenter ( SlotBoxKnob , 50 , 28 ) ;
-                SlotParent = SlotBoxKnob ;
-            }
-            else
-            {
-                root = CreateUIElementRoot ( NameSwitchLindsay , new Vector2 ( 50 , 28 ) , typeof ( Switch ) , typeof ( AutoColorSwitch ) , typeof ( RectSizeNotifier ) , typeof ( SelectableAdds ) );
-                SlotParent = root ;
-            }
+        //// switch
+        //static GameObject CreateSwitchLindsay ( bool has_label = true )
+        //{
+        //    //  Lindsay:    Unity:
+        //    //  53 x 32     50 x 28
+        //    Vector2 ElementSize = has_label ? s_ThickElementSize : new Vector2 ( 50 , 28 ) ;
+        //    GameObject root = null ;
+        //    GameObject SlotParent = null ;
+        //    if ( has_label )
+        //    {
+        //        root = CreateUIElementRoot ( NameSwitch , s_ThickElementSize , typeof ( Switch ) , typeof ( AutoColorSwitch ) , typeof ( SelectableAdds ) ) ;
+        //        // slot box / knob
+        //        var SlotBoxKnob = root.createChild ( "Box Slot Knob" , typeof ( RectSizeNotifier ) ) ;
+        //        SetLeftCenter ( SlotBoxKnob , 50 , 28 ) ;
+        //        SlotParent = SlotBoxKnob ;
+        //    }
+        //    else
+        //    {
+        //        root = CreateUIElementRoot ( NameSwitchLindsay , new Vector2 ( 50 , 28 ) , typeof ( Switch ) , typeof ( AutoColorSwitch ) , typeof ( RectSizeNotifier ) , typeof ( SelectableAdds ) );
+        //        SlotParent = root ;
+        //    }
 
-            // slot
-            var Slot = SlotParent.createChild ( "Slot" , typeof ( RawImageV2 ) ) ;
-            var SlotRi = Slot.GetComponent < RawImageV2 > () ;
-            SlotRi.drarBorder = true ;
-            SlotRi.borderWidth = 1 ;
-            SlotRi.borderFade = true ;
-            SlotRi.borderColor = getGrey ( 0.5f ) ;
-            var Knob = Slot.createChild ( "Knob" , typeof ( RawImageV2 ) ) ;
-            setupBackground ( Slot , true ) ;
-            setupBackground ( Knob , true , 1 ) ;
+        //    // slot
+        //    var Slot = SlotParent.createChild ( "Slot" , typeof ( RawImageV2 ) ) ;
+        //    var SlotRi = Slot.GetComponent < RawImageV2 > () ;
+        //    SlotRi.drarBorder = true ;
+        //    SlotRi.borderWidth = 1 ;
+        //    SlotRi.borderFade = true ;
+        //    SlotRi.borderColor = getGrey ( 0.5f ) ;
+        //    var Knob = Slot.createChild ( "Knob" , typeof ( RawImageV2 ) ) ;
+        //    setupBackground ( Slot , true ) ;
+        //    setupBackground ( Knob , true , 1 ) ;
 
-            if ( has_label )
-            {
-                // label
-                var Label = root.createChild ( "Label" , typeof ( Text ) ) ;
-                SetFull ( Label , 60 , 5 , 2 , 1 );
-                SetDefaultTextValues ( Label , "Switch" , TextAnchor.MiddleLeft , 16 ) ;
-            }
+        //    if ( has_label )
+        //    {
+        //        // label
+        //        var Label = root.createChild ( "Label" , typeof ( Text ) ) ;
+        //        SetFull ( Label , 60 , 5 , 2 , 1 );
+        //        SetDefaultTextValues ( Label , "Switch" , TextAnchor.MiddleLeft , 16 ) ;
+        //    }
 
-            // set elements
-            Switch sw = root.GetComponent < Switch > () ;
-            sw.setElements ( Slot , Knob ) ;
-            SetDefaultColorTransitionValues ( root ) ;
+        //    // set elements
+        //    Switch sw = root.GetComponent < Switch > () ;
+        //    sw.setElements ( Slot , Knob ) ;
+        //    SetDefaultColorTransitionValues ( root ) ;
 
-            return root ;
-        }
+        //    return root ;
+        //}
 
         // shadowed button
         static GameObject CreateShadowedButton ()
