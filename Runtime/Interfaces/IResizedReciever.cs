@@ -3,10 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using System;
 
-namespace Rudi
+namespace Rudi.UI
 {
-	public interface IResizedReciever
-	{
-		public void OnResized ();
-	}
+    public interface IResizedReciever
+    {
+        public void OnResized ();
+    }
 }

@@ -6,7 +6,7 @@ using UnityEngine.Events;
 
 namespace Rudi.UI
 {
-	[ExecuteAlways]
+    [ExecuteAlways]
     [RequireComponent ( typeof ( RectTransform ) )]
     public class RectSizeNotifier : MonoBehaviour
     {
