@@ -9,7 +9,7 @@ using Rudi.UI;
 namespace Rudi
 {
     ///*
-    public static class DefaultControls
+    public static class DefaultControlsUIExtensions
     {
 #if UNITY_EDITOR
 
