@@ -617,15 +617,15 @@ namespace Rudi.UI
 
             if ( HasShadow )
             {
-                mat.SetFloat ( "_ShadowDarkening" , 0.01f * m_ShadowDarkening );
+                mat.SetFloat ( "_ShadowDarkening" , DropShadow.getAdaptedShadowAlpha ( 0.01f * m_ShadowDarkening ) ) ;
                 mat.SetFloat ( "_ShadowOffsetY" , m_ShadowOffsetY );
             }
         }
 
         protected override void OnRectTransformDimensionsChange ()
         {
-            base.OnRectTransformDimensionsChange ();
-            if ( hasRoundCorners || hasBorder ) SetMaterialDirty ();
+            base.OnRectTransformDimensionsChange () ;
+            if ( hasRoundCorners || hasBorder ) SetMaterialDirty () ;
         }
 
         private static readonly Vector2 [] uv_standard  = { Vector2.zero , Vector2.up , Vector2.one , Vector2.right } ;

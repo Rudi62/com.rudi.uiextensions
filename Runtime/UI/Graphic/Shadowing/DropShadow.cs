@@ -328,6 +328,13 @@ namespace Rudi.UI
             m_ShowShadow = initialShow;
         }
 
+        public static float getAdaptedShadowAlpha ( float alpha_gamma )
+        {
+            return QualitySettings.activeColorSpace == ColorSpace.Linear ?
+                1.0f - Mathf.Pow ( 1.0f - alpha_gamma , 2.2f ) :
+                alpha_gamma;
+        }
+
         public DropShadow () { }
         public float multipliedElevation => elevation * m_ElevationMultiplier;
         public float diffusivity => properties.diffusivity;
@@ -346,7 +353,8 @@ namespace Rudi.UI
         public Vector3 lightDir => properties.lightDir;
         public Vector4 lightDir4 => properties.lightDir4;
         public float sigma => shadowDistance * diffusivity * 0.1f;
-        public float shadowAlpha => darkening * Mathf.Exp ( -0.1f * sigma * brighteningWithBlur );
+        //public float shadowAlpha => darkening * Mathf.Exp ( -0.1f * sigma * brighteningWithBlur );
+        public float shadowAlpha => getAdaptedShadowAlpha ( darkening * Mathf.Exp ( -0.1f * sigma * brighteningWithBlur ) ) ;
 
         public Rect getWidened ( Rect rect , float sigma_factor = 2f )
         {
