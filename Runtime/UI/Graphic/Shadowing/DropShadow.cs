@@ -330,9 +330,13 @@ namespace Rudi.UI
 
         public static float getAdaptedShadowAlpha ( float alpha_gamma )
         {
-            return QualitySettings.activeColorSpace == ColorSpace.Linear ?
-                1.0f - Mathf.Pow ( 1.0f - alpha_gamma , 2.2f ) :
-                alpha_gamma;
+            // Mathf.GammaToLinearSpace(backgroundGamma);
+            if ( QualitySettings.activeColorSpace != ColorSpace.Linear ) return alpha_gamma ;
+            //return 1.0f - Mathf.Pow ( 1.0f - alpha_gamma , 2.2f ) ;
+            return Mathf.GammaToLinearSpace ( alpha_gamma ) ;
+            //return QualitySettings.activeColorSpace == ColorSpace.Linear ?
+            //    1.0f - Mathf.Pow ( 1.0f - alpha_gamma , 2.2f ) :
+            //    alpha_gamma;
         }
 
         public DropShadow () { }
