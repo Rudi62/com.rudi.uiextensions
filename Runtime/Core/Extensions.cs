@@ -638,17 +638,13 @@ namespace Rudi.Extensions
 
     public static class RenderTextureExtension
     {
-        //public static Vector2Int GetSize ( this RenderTexture rt )
-        //{
-        //	return new Vector2Int ( rt.width , rt.height ) ;
-        //}
         public static bool Resize ( this RenderTexture rt , Vector2Int size )
         {
-            if ( rt.GetSize () == size ) return true;
-            rt.Release ();
-            rt.width = size.x;
-            rt.height = size.y;
-            return rt.Create ();
+            if ( rt.IsCreated () && rt.GetSize () == size ) return true ;
+            rt.Release () ;
+            rt.width = size.x ;
+            rt.height = size.y ;
+            return rt.Create () ;
         }
     }
 

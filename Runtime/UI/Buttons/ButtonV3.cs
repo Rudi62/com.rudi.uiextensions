@@ -122,7 +122,7 @@ namespace Rudi.UI
         }
         private RawImageBG rawImageBG => m_RawImageBG_toUse;
 
-        private float m_CurrentShadowMultiplier = 0f ;
+        //private float m_CurrentShadowMultiplier = 0f ;
 
         private bool m_SuppressClick = false ;
         private bool m_IsPointerInside = false ;
@@ -164,6 +164,13 @@ namespace Rudi.UI
             }
         }
 
+        private static void startShadowAnimaton ( ISoftShadow obj , float shadowDest , float duration )
+        {
+            if ( !isEnabled ( obj ) ) return ;
+            obj.omitIfZeroDistance = true ;
+            obj.CrossFadeElevationMultiplier ( shadowDest , duration ) ;
+        }
+
         private void doTransition ( SelectionState state , bool instant )
         {
             if ( state == m_LastState ) return;
@@ -183,13 +190,19 @@ namespace Rudi.UI
                     additionalShadowObject.omitIfZeroDistance = true;
                     additionalShadowObject.elevationMultiplier = state == SelectionState.Disabled ? 0 : 1;
                 }
-                m_CurrentShadowMultiplier = shadowMultiplier;
+                //m_CurrentShadowMultiplier = shadowMultiplier;
             }
             else
             {
-                StopAnimation ();
-                m_Animation = Animation ( colors.fadeDuration , shadowMultiplier );
-                StartCoroutine ( m_Animation );
+                // use their own tweeners instead of my coroutine
+                startShadowAnimaton ( activeShadow , shadowMultiplier , colors.fadeDuration ) ;
+                if ( m_AnimateAdditionalObject ) startShadowAnimaton ( additionalShadowObject , shadowMultiplier , colors.fadeDuration ) ;
+                if ( m_EnableLongPress && IsPressed () && m_OnLongPress != null && m_IsPointerInside )
+                {
+                    StopAnimation ();
+                    m_Animation = Animation ( colors.fadeDuration , shadowMultiplier );
+                    StartCoroutine ( m_Animation );
+                }
             }
         }
 
@@ -217,25 +230,30 @@ namespace Rudi.UI
             }
         }
 
+        // this no longer animates anything, but is for long press only, so maybe consider renaming...
         private IEnumerator m_Animation = null ;
         private IEnumerator Animation ( float duration , float shadowDest )
         {
             float pos = 0 ;
-            var shadowStart = m_CurrentShadowMultiplier ;
-            if ( null != activeShadow ) activeShadow.omitIfZeroDistance = true;
-            if ( null != additionalShadowObject ) additionalShadowObject.omitIfZeroDistance = true;
-            while ( pos < duration )
-            {
-                var percent = SmoothStep.ease_out4 ( pos / duration );
-                var ShadowValue = Mathf.Lerp ( shadowStart , shadowDest , percent ) ;
-                m_CurrentShadowMultiplier = ShadowValue;
-                SetShadows ( ShadowValue );
-                yield return null;
-                pos += Time.unscaledDeltaTime;
-            }
-            SetShadows ( shadowDest );
+            // shadow animation now in their own tweeners
+            //var shadowStart = m_CurrentShadowMultiplier ;
+            //if ( null != activeShadow ) activeShadow.omitIfZeroDistance = true;
+            //if ( null != additionalShadowObject ) additionalShadowObject.omitIfZeroDistance = true;
+            //while ( pos < duration )
+            //{
+            //    var percent = SmoothStep.ease_out4 ( pos / duration );
+            //    var ShadowValue = Mathf.Lerp ( shadowStart , shadowDest , percent ) ;
+            //    m_CurrentShadowMultiplier = ShadowValue;
+            //    SetShadows ( ShadowValue );
+            //    yield return null;
+            //    pos += Time.unscaledDeltaTime;
+            //}
+            //SetShadows ( shadowDest );
 
             // handle long press
+            yield return null;
+            pos += Time.unscaledDeltaTime;
+
             if ( m_EnableLongPress && IsPressed () && m_OnLongPress != null && m_IsPointerInside )
             {
                 while ( pos < m_HoldDuration && IsPressed () && m_IsPointerInside )

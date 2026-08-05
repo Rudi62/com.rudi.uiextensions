@@ -328,15 +328,17 @@ namespace Rudi.UI
             m_ShowShadow = initialShow;
         }
 
+        public static float MyGammaToLinearSpace ( float gamma ) => Mathf.Pow ( gamma , 2.2f ) ;
+        public static float UnityGammaToLinearSpace ( float gamma ) => Mathf.GammaToLinearSpace ( gamma ) ;
+        public static float GammaToLinearSpace ( float gamma ) => UnityGammaToLinearSpace ( gamma ) ;
+        public static float AlphaGammaToLinearSpace      ( float alpha_gamma ) => 1f - GammaToLinearSpace      ( 1f - alpha_gamma ) ;
+        public static float MyAlphaGammaToLinearSpace    ( float alpha_gamma ) => 1f - MyGammaToLinearSpace    ( 1f - alpha_gamma ) ;
+        public static float UnityAlphaGammaToLinearSpace ( float alpha_gamma ) => 1f - UnityGammaToLinearSpace ( 1f - alpha_gamma ) ;
+
         public static float getAdaptedShadowAlpha ( float alpha_gamma )
         {
-            // Mathf.GammaToLinearSpace(backgroundGamma);
             if ( QualitySettings.activeColorSpace != ColorSpace.Linear ) return alpha_gamma ;
-            //return 1.0f - Mathf.Pow ( 1.0f - alpha_gamma , 2.2f ) ;
-            return Mathf.GammaToLinearSpace ( alpha_gamma ) ;
-            //return QualitySettings.activeColorSpace == ColorSpace.Linear ?
-            //    1.0f - Mathf.Pow ( 1.0f - alpha_gamma , 2.2f ) :
-            //    alpha_gamma;
+            return AlphaGammaToLinearSpace ( alpha_gamma ) ;
         }
 
         public DropShadow () { }

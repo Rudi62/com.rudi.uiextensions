@@ -1,4 +1,8 @@
-﻿using System.Collections;
+﻿
+// author: Rudi Weinacker
+// improved with great assistance of Google-AI
+
+using System.Collections;
 using System.Collections.Generic;
 using Rudi.Core;
 using Rudi.Extensions;
@@ -15,25 +19,117 @@ namespace Rudi.UI
         {
             //Log.i ( TAG , msg );
         }
+        private static RenderTexture nullReturn ( string msg ) { log ( msg ) ; return null ; }
+        private static bool falseReturn ( string msg ) { log ( msg ) ; return false ; }
+
+        // GC-free, thanks Google-AI!
+        private static readonly List < Vector3 > s_Vertices = new () ;
+        private static readonly List < int     > s_Indices  = new () ;
+        private static readonly List < Color32 > s_Colors   = new () ;
+        private static readonly List < Vector2 > s_UVs      = new () ;
 
         static private Matrix4x4 m_ModelMatrix = Matrix4x4.identity ;
         static private Matrix4x4 getModelMatrix ( Vector2 mul , Vector2 add )
         {
-            m_ModelMatrix.m00 = mul.x;
-            m_ModelMatrix.m11 = mul.y;
-            m_ModelMatrix.m03 = add.x;
-            m_ModelMatrix.m13 = add.y;
-            return m_ModelMatrix;
+            m_ModelMatrix.m00 = mul.x ;
+            m_ModelMatrix.m11 = mul.y ;
+            m_ModelMatrix.m03 = add.x ;
+            m_ModelMatrix.m13 = add.y ;
+            return m_ModelMatrix ;
         }
-        private static float getPPU ( Graphic graphic )
+
+        public static Matrix4x4 getModelMatrix ( Rect rect , Vector2 scale , Vector2 offset )
+        {
+            var bySize = Vector2.one / rect.size ;
+            var Add = offset - rect.min * bySize ;
+            var Mul = scale * bySize ;
+
+            return getModelMatrix ( Mul , Add ) ;
+        }
+
+        public static Matrix4x4 getModelMatrix ( Rect rect ) => getModelMatrix ( rect , Vector2.one , Vector2.zero ) ;
+
+        private static float getPPU ( Graphic graphic ) // pixels per unit
         {
             var canvas = graphic.canvas ;
-            if ( null == canvas ) return 1f;
-            return canvas.scaleFactor;
+            if ( null == canvas ) return 1f ;
+            return canvas.scaleFactor ;
         }
-        private static RenderTexture nullReturn ( string msg ) { log ( msg ); return null; }
-        private static bool falseReturn ( string msg ) { log ( msg ); return false; }
-        public static RenderTexture drawUIVerticesToTexture ( RenderTexture renderTexture , Graphic graphic , int borderPixels )
+
+        public static RenderTexture DrawMeshToTexture ( RenderTexture renderTexture , Mesh mesh , Matrix4x4 modelmatrix , Material material )
+        {
+            // soonly alloc free
+            s_Vertices . Clear () ;
+            s_Indices  . Clear () ;
+            s_Colors   . Clear () ;
+            s_UVs      . Clear () ;
+
+            mesh.GetVertices  ( s_Vertices    ) ;
+            mesh.GetTriangles ( s_Indices , 0 ) ; // Submesh 0
+            mesh.GetColors    ( s_Colors      ) ;
+            mesh.GetUVs       ( 0 , s_UVs     ) ;
+
+            if ( s_Vertices.Count == 0 || s_Indices.Count == 0 ) return null ;
+
+            var previous = RenderTexture.active ;
+            RenderTexture.active = renderTexture ;
+
+            if ( !material.SetPass ( 0 ) )
+            {
+                RenderTexture.active = previous ;
+                return null ;
+            }
+
+            GL.Color ( Color.white ) ;
+            GL.PushMatrix () ;
+            GL.LoadOrtho () ;
+            GL.modelview = modelmatrix ;
+            GL.Clear ( false , true , Color.clear ) ; // fill transparent
+
+            // start rendering
+            GL.Begin ( GL.TRIANGLES ) ;
+
+            int indexCount = s_Indices.Count ;
+            for ( int i = 0 ; i < indexCount ; i++ )
+            {
+                int index = s_Indices [ i ] ;
+                GL.Color    ( s_Colors   [ index ] ) ;
+                GL.TexCoord ( s_UVs      [ index ] ) ;
+                GL.Vertex   ( s_Vertices [ index ] ) ;
+            }
+
+            GL.End () ;
+            GL.PopMatrix () ;
+
+            RenderTexture.active = previous ;
+            return renderTexture ;
+        }
+
+        private static bool renderGraphic ( RenderTexture renderTexture , Graphic graphic , Matrix4x4 modelmatrix )
+        {
+            var renderer = graphic.canvasRenderer ;
+            if ( null == renderer ) return falseReturn ( "no CanvasRenderer" );
+
+            var mesh = renderer.GetMesh () ;
+            if ( null == mesh ) return falseReturn ( "no Mesh" ) ;
+
+            Material renderMaterial = graphic.materialForRendering ;
+            Texture originalMaterialTexture = renderMaterial.mainTexture ;
+            if ( graphic.mainTexture != null ) renderMaterial.mainTexture = graphic.mainTexture ;
+            var rt = DrawMeshToTexture ( renderTexture , mesh , modelmatrix , renderMaterial ) ;
+            renderMaterial.mainTexture = originalMaterialTexture ;
+            return rt != null ;
+        }
+
+        public static RenderTexture drawGraphicToTexture ( RenderTexture renderTexture , Graphic graphic , Vector2 scale , Vector2 offset )
+        {
+            if ( graphic == null || renderTexture == null ) return nullReturn ( "no data" ) ;
+            var ModelMatrix = getModelMatrix ( graphic.rectTransform.rect , scale , offset ) ;
+            if ( !renderGraphic ( renderTexture , graphic , ModelMatrix ) ) return null;
+            return renderTexture;
+        }
+
+        public static Vector2Int getBestTextureSize ( Graphic graphic , int borderPixels = 0 )
         {
             var ppu = getPPU ( graphic ) ;
             var upp = 1f / ppu ;
@@ -43,9 +139,42 @@ namespace Rudi.UI
             var VBorderPixels = Vector2Int.one * borderPixels ;
             var DstSizePixels = Vector2Int.RoundToInt ( rect.size * ppu ) + VBorderPixels * 2 ;
 
-            if ( !DstSizePixels.hasArea () ) return nullReturn ( "no area" );
-            if ( !renderTexture.Resize ( DstSizePixels ) ) return nullReturn ( "resize failed" );
+            return DstSizePixels ;
+        }
 
+        public static Texture2D ToTexture ( RenderTexture renderTexture , TextureFormat format = TextureFormat.RGBA32 )
+        {
+            var Result = new Texture2D ( renderTexture.width , renderTexture.height , format , false ) ;
+
+            var previous = RenderTexture.active ;
+            RenderTexture.active = renderTexture ;
+            Result.ReadPixels ( new Rect ( 0 , 0 , renderTexture.width , renderTexture.height ) , 0 , 0 , false ) ;
+            Result.Apply ( false , makeNoLongerReadable: false ) ;
+            RenderTexture.active = previous ;
+
+            Result.filterMode = FilterMode.Bilinear ;
+            Result.wrapMode   = TextureWrapMode.Clamp ;
+            Result.hideFlags  = HideFlags.HideAndDontSave ; // HideAndDontSave DontSave
+            return Result ;
+        }
+
+
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // used by SoftShadow
+
+        public static RenderTexture drawGraphicToTexture ( RenderTexture renderTexture , Graphic graphic , int borderPixels )
+        {
+            var ppu = getPPU ( graphic ) ;
+
+            var rect = graphic.rectTransform.rect ;
+
+            var VBorderPixels = Vector2Int.one * borderPixels ;
+            var DstSizePixels = Vector2Int.RoundToInt ( rect.size * ppu ) + VBorderPixels * 2 ;
+
+            if ( !DstSizePixels.hasArea () ) return nullReturn ( "no area" ) ;
+            if ( !renderTexture.Resize ( DstSizePixels ) ) return nullReturn ( "resize failed" ) ;
+
+            var upp = 1f / ppu ;
 
             var VDstSize = ( Vector2 ) DstSizePixels * upp ;
             var VBorder  = ( Vector2 ) VBorderPixels * upp ;
@@ -55,65 +184,7 @@ namespace Rudi.UI
 
             var ModelMatrix = getModelMatrix ( Mul , Add ) ;
 
-            if ( !renderMesh ( renderTexture , graphic , ModelMatrix ) ) return null;
-            return renderTexture;
-        }
-
-        private static bool renderMesh ( RenderTexture renderTexture , Graphic graphic , Matrix4x4 modelmatrix )
-        {
-            var renderer = graphic.canvasRenderer ;
-            if ( null == renderer ) return falseReturn ( "no CanvasRenderer" );
-            var mesh = renderer.GetMesh () ;
-            if ( null == mesh ) return falseReturn ( "no Mesh" );
-
-            var vertices  = mesh.vertices  ;
-            var indices   = mesh.triangles ;
-            var colors    = mesh.colors32  ;
-            var texcoords = mesh.uv        ;
-
-            // start rendering
-
-            var previous = RenderTexture.active ;
-            RenderTexture.active = renderTexture;
-
-            graphic.material.mainTexture = graphic.mainTexture;
-            if ( !graphic.material.SetPass ( 0 ) ) return falseReturn ( "pass failed" );
-
-            GL.Clear ( false , true , Color.clear ); // fill transparent
-            GL.Color ( Color.white );
-            GL.PushMatrix ();
-            GL.LoadOrtho ();
-            GL.modelview = modelmatrix;
-            GL.Begin ( GL.TRIANGLES );
-
-            foreach ( var index in indices )
-            {
-                GL.Color ( colors [index] );
-                GL.TexCoord ( texcoords [index] );
-                GL.Vertex ( vertices [index] );
-            }
-
-            GL.End ();
-            GL.PopMatrix ();
-
-            graphic.material.mainTexture = null;
-            RenderTexture.active = previous;
-            return true;
-        }
-
-        public static RenderTexture drawUIVerticesToTexture ( RenderTexture renderTexture , Graphic graphic , Vector2 scale , Vector2 offset )
-        {
-            var rect = graphic.rectTransform.rect ;
-
-            var bySize = Vector2.one / rect.size ;
-
-            var Add = offset - rect.min * bySize ;
-            var Mul = scale * bySize ;
-
-            var ModelMatrix = getModelMatrix ( Mul , Add ) ;
-
-            if ( !renderMesh ( renderTexture , graphic , ModelMatrix ) ) return null;
-
+            if ( !renderGraphic ( renderTexture , graphic , ModelMatrix ) ) return null;
             return renderTexture;
         }
 

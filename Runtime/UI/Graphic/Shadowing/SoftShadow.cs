@@ -35,15 +35,7 @@ namespace Rudi.UI
         private void log ( string msg ) { log ( TAG , msg ); }
         private void log1 ( string msg ) { log1 ( TAG , msg ); }
 
-        public float distance
-        {
-            get => m_DropShadow.distance;
-            //set
-            //{
-            //    m_DropShadow.distance = value ;
-            //    rebuildShadowGraphic () ;
-            //}
-        }
+        public float distance => m_DropShadow.distance;
 
         public float elevation
         {
@@ -140,17 +132,18 @@ namespace Rudi.UI
             {
                 if ( null == m_RenderTexture )
                 {
-                    if ( m_OnDestroy ) return null;
-                    m_RenderTexture = new RenderTexture ( 10 , 10 , 0 , RenderTextureFormat.ARGB32 );
-                    m_RenderTexture.Create ();
-                    m_RenderTexture.filterMode = FilterMode.Bilinear; // Bilinear is needed for linear sampling method
-                    m_RenderTexture.hideFlags = HideFlags.HideAndDontSave; // DontSave HideAndDontSave
+                    if ( m_OnDestroy ) return null ;
+                    m_RenderTexture = new RenderTexture ( 10 , 10 , 0 , RenderTextureFormat.ARGB32 ) ;
+                    //m_RenderTexture.Create ();
+                    m_RenderTexture.filterMode = FilterMode.Bilinear ; // Bilinear is needed for linear sampling method
+                    m_RenderTexture.wrapMode   = TextureWrapMode.Clamp ; // Schützt die Schattenränder vor Artefakten
+                    m_RenderTexture.hideFlags  = HideFlags.HideAndDontSave ; // DontSave HideAndDontSave
                 }
-                return m_RenderTexture;
+                return m_RenderTexture ;
             }
         }
 
-        private DropShadow shadowProperties => m_DropShadow;
+        private DropShadow shadowProperties => m_DropShadow ;
 
         //private void log ( string msg ) { log ( TAG , msg ) ; }
         private RectTransform m_RectTransform = null ;
@@ -243,11 +236,6 @@ namespace Rudi.UI
                 Utils.DestroyObject ( m_RenderTexture );
                 m_RenderTexture = null;
             }
-            //if ( null != m_ShadowReciever )
-            //{
-            //	DestroyImmediate ( m_ShadowReciever.gameObject ) ;
-            //	m_ShadowReciever = null ;
-            //}
             m_ShadowCalculated = false;
         }
 
@@ -263,7 +251,7 @@ namespace Rudi.UI
         {
             if ( null == graphic ) return errorReturn ( "graphic is null" );
             if ( !hasPPU ) return errorReturn ( "no ppu" );
-            var rt = GraphicRenderTools.drawUIVerticesToTexture ( renderTexture , graphic , border ) ;
+            var rt = GraphicRenderTools.drawGraphicToTexture ( renderTexture , graphic , border ) ;
             if ( rt == null ) return errorReturn ( "couldn't draw texture" ); ;
 
             //log ( "CalcShadow () - step 3" ) ;
@@ -274,7 +262,6 @@ namespace Rudi.UI
             }
             log ( "pixel_sigma = " + pixel_sigma );
             return true;
-
         }
 
         private CanvasCallbacks m_Callbacks = null ;
@@ -397,24 +384,27 @@ namespace Rudi.UI
             if ( checkPPU () )
             {
                 rebuildShadowGraphic ();
-
-                //if ( !m_ShadowCalculated )
-                //{
-                // rebuildShadowGraphic ();
-                //}
-                //         else
-                //         {
-                //             updateShadowRecieverPosition () ;
-                //         }
             }
         }
+        private void unregisterCallback () => m_Callbacks?.requestStop ();
 
         protected override void OnDisable ()
         {
-            m_Callbacks?.Stop ();
+            unregisterCallback () ;
             if ( null != shadowReciever ) shadowReciever.shadowEnabled = false;
             base.OnDisable ();
             m_DropShadow.OnDisable ();
+        }
+
+        protected override void OnDestroy ()
+        {
+            log ( "OnDestroy ()" );
+            m_OnDestroy = true;
+            unregisterCallback () ;
+            clear ();
+            //ShadowProperties.ShadowObjectsChanged () ;
+            m_DistanceTweener?.OnDestroy ();
+            base.OnDestroy ();
         }
 
         private void Awake ()
@@ -428,35 +418,12 @@ namespace Rudi.UI
             base.Start ();
             log ( "Start ()" );
             m_DropShadow.setObject ( this );
-            //{
-            //    ISoftShadow obj = this ;
-            //    if ( null == obj )
-            //    {
-            //        Log.i ( TAG , gameObject , "obj is null" ) ;
-            //    }
-            //    if ( !m_DropShadow.hasObjects () )
-            //    {
-            //        Log.i ( TAG , gameObject , "DropShadow doesn't have objects!" );
-            //    }
-            //}
             m_Started = true;
             m_OnDestroy = false;
-            //ShadowProperties.ShadowObjectsChanged () ;
             OnEnable ();
-            //copyShadow ();
-            //m_DropShadow.OnEnable () ;
 
         }
 
-        protected override void OnDestroy ()
-        {
-            log ( "OnDestroy ()" );
-            m_OnDestroy = true;
-            clear ();
-            //ShadowProperties.ShadowObjectsChanged () ;
-            m_DistanceTweener?.OnDestroy ();
-            base.OnDestroy ();
-        }
         public MonoBehaviour getMonoObject () => this;
         public void propertiesObjectChanged ( DropShadow.MessageReason reason )
         {
@@ -497,74 +464,10 @@ namespace Rudi.UI
             m_ShadowReciever = null;
         }
 
-        static private Matrix4x4 m_ModelMatrix = Matrix4x4.identity ;
-        static private Matrix4x4 getModelMatrix ( Vector2 mul , Vector2 add )
-        {
-            m_ModelMatrix.m00 = mul.x;
-            m_ModelMatrix.m11 = mul.y;
-            m_ModelMatrix.m03 = add.x;
-            m_ModelMatrix.m13 = add.y;
-            return m_ModelMatrix;
-        }
-
         private RenderTexture nullReturn ( string msg ) { log ( msg ); return null; }
         private RenderTexture nullReturn1 ( string msg ) { log1 ( msg ); return null; }
         private T objReturn<T> ( string msg , T t ) { log ( msg ); return t; }
         private T objReturn1<T> ( string msg , T t ) { log1 ( msg ); return t; }
-        private RenderTexture drawUIVerticesToTexture ( RenderTexture renderTexture , Graphic graphic , Mesh mesh , int borderPixels , float ppu )
-        {
-            var rect = graphic.rectTransform.rect ;
-
-            var VBorderPixels = Vector2Int.one * borderPixels ;
-            var DstSizePixels = Vector2Int.RoundToInt ( rect.size * ppu ) + VBorderPixels * 2 ;
-
-            if ( !DstSizePixels.hasArea () ) return nullReturn ( "no area" );
-            if ( !renderTexture.Resize ( DstSizePixels ) ) return nullReturn ( "resize failed" );
-
-            var upp = 1f / ppu ;
-
-            var VDstSize = ( Vector2 ) DstSizePixels * upp ;
-            var VBorder  = ( Vector2 ) VBorderPixels * upp ;
-
-            var Mul = Vector2.one / VDstSize ;
-            var Add = ( VBorder - rect.min ) * Mul ;
-
-            var ModelMatrix = getModelMatrix ( Mul , Add ) ;
-
-            var vertices  = mesh.vertices  ;
-            var indices   = mesh.triangles ;
-            var colors    = mesh.colors32  ;
-            var texcoords = mesh.uv        ;
-
-            // start rendering
-
-            var previous = RenderTexture.active ;
-            RenderTexture.active = renderTexture;
-
-            graphic.material.mainTexture = graphic.mainTexture;
-            if ( !graphic.material.SetPass ( 0 ) ) return nullReturn ( "pass failed" );
-
-            GL.Clear ( false , true , Color.clear ); // fill transparent
-            GL.Color ( Color.white );
-            GL.PushMatrix ();
-            GL.LoadOrtho ();
-            GL.modelview = ModelMatrix;
-            GL.Begin ( GL.TRIANGLES );
-
-            foreach ( var index in indices )
-            {
-                GL.Color ( colors [index] );
-                GL.TexCoord ( texcoords [index] );
-                GL.Vertex ( vertices [index] );
-            }
-
-            GL.End ();
-            GL.PopMatrix ();
-
-            graphic.material.mainTexture = null;
-            RenderTexture.active = previous;
-            return renderTexture;
-        }
 
         private static Material m_MaterialBlur = null ;
         private static Material matBlur
@@ -586,31 +489,17 @@ namespace Rudi.UI
             if ( null == matBlur ) return objReturn1 ( "matBlur is zero" , tex );
             var tmp = RenderTexture.GetTemporary ( tex.width , tex.height , 0 , RenderTextureFormat.ARGB32 ) ;
             if ( null == tmp ) return nullReturn1 ( "failed getting render texture" );
-            tmp.filterMode = FilterMode.Bilinear;
+            tmp.filterMode = FilterMode.Bilinear ;
+            tmp.wrapMode = TextureWrapMode.Clamp ; // Zwingend erforderlich für saubere Ränder beim Blit!
             matBlur.SetFloat ( "_Sigma" , sigma );
             var pass = linear_sampling ? 2 : 0 ;
             log ( "sigma = " + sigma );
-            var previous = RenderTexture.active ;
+            //var previous = RenderTexture.active ; // Google-AI means, this is not necessary
             Graphics.Blit ( tex , tmp , matBlur , pass ); // horizontal
             Graphics.Blit ( tmp , tex , matBlur , pass + 1 ); // vertical
-            RenderTexture.active = previous;
+            //RenderTexture.active = previous;
             RenderTexture.ReleaseTemporary ( tmp );
             return tex;
-        }
-
-        private static Texture2D ToTexture ( RenderTexture renderTexture , TextureFormat format = TextureFormat.RGBA32 )
-        {
-            var Result = new Texture2D ( renderTexture.width , renderTexture.height , format , false );
-            var previous = RenderTexture.active;
-            RenderTexture.active = renderTexture;
-            Result.ReadPixels ( new Rect ( 0 , 0 , renderTexture.width , renderTexture.height ) , 0 , 0 , false );
-            Result.Apply ( false , makeNoLongerReadable: false );
-            RenderTexture.active = previous;
-            RenderTexture.ReleaseTemporary ( renderTexture );
-            Result.filterMode = FilterMode.Bilinear;
-            Result.wrapMode = TextureWrapMode.Clamp;
-            Result.hideFlags = HideFlags.HideAndDontSave; // HideAndDontSave DontSave
-            return Result;
         }
     }
 }

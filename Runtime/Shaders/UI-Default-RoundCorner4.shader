@@ -764,7 +764,8 @@ Shader "Rudi/UI/RoundCorner4"
                 }
                 else
                 {
-                    color.xyz = lerp ( color.xyz , 0.0 , shadowAlpha ) ; // pma
+                    //color.xyz = lerp ( color.xyz , 0.0 , shadowAlpha ) ; // pma
+                    color.xyz *= ( 1.0 - shadowAlpha ) ; // pma
                     //color.a *= CornerAlphaMultiplier ; // ohne pma
                     color *= CornerAlphaMultiplier ; // mit pma
                 }

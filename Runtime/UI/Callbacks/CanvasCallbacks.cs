@@ -118,6 +118,7 @@ namespace Rudi.UI
 
         public void Stop ()
         {
+            m_StopRequested = false ;
             if ( isRegistered )
             {
                 m_RemoveCallback ( m_InternalCallback );
@@ -125,7 +126,7 @@ namespace Rudi.UI
             }
         }
 
-        public int counter => m_Counter;
+        public int counter => m_Counter ;
 
         public void requestCallback ( Canvas.WillRenderCanvases callback , int numRepeats = 1 )
         {
@@ -135,15 +136,35 @@ namespace Rudi.UI
             m_Counter = numRepeats;
             addCallback ( CallbackFunctionRepeat );
         }
-
+        private bool m_StopRequested = false ;
+        public void requestStop ()
+        {
+            if ( !isRegistered ) return ;
+            if ( !CanvasUpdateRegistry.IsRebuildingLayout () ) Stop () ;
+            else m_StopRequested = true ; // only point m_StopRequested is set to true
+        }
         private void CallbackFunctionRepeat ()
         {
+            if ( m_StopRequested )
+            {
+                m_StopRequested = false ;
+                Stop () ;
+                return ;
+            }
+
             if ( --m_Counter < 0 ) Stop ();
             m_ExternalCallback ();
         }
 
         private void CallbackFunctionSingle ()
         {
+            if ( m_StopRequested )
+            {
+                m_StopRequested = false;
+                Stop () ;
+                return ;
+            }
+
             if ( --m_Counter < 0 )
             {
                 Stop ();

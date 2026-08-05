@@ -148,7 +148,7 @@ namespace Rudi.UI
             callbacks.StartAsap ();
         }
 
-        private void unregisterCallback () => callbacks.Stop ();
+        private void unregisterCallback () => m_Callbacks?.requestStop ();
 
         public void UpdatePosition ( bool performparenting = true )
         {
@@ -196,7 +196,7 @@ namespace Rudi.UI
 
         protected override void OnDisable ()
         {
-            if ( CanvasUpdateRegistry.IsRebuildingLayout () ) return;
+            //if ( CanvasUpdateRegistry.IsRebuildingLayout () ) return;
             unregisterCallback ();
             shadowEnabled = false;
             log ( "OnDisable ()" );

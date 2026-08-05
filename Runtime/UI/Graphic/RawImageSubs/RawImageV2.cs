@@ -471,8 +471,8 @@ namespace Rudi.UI
 
         public bool recalcLayoutAfterTextureLoad
         {
-            get => m_RecalcLayoutAfterTextureLoad;
-            set => m_RecalcLayoutAfterTextureLoad = value;
+            get => m_RecalcLayoutAfterTextureLoad ;
+            set => m_RecalcLayoutAfterTextureLoad = value ;
         }
 
         private Texture m_LoadedTexture = null ;
@@ -490,8 +490,9 @@ namespace Rudi.UI
                 //    texture = null;
                 //}
 
+                // new approach, suggested by Google-AI
                 // Decouple from the UI first before destroying the underlying memory asset
-                if ( texture == m_LoadedTexture ) texture = null;
+                if ( texture == m_LoadedTexture ) texture = null ;
                 Utils.DestroyObjectAndZero ( ref m_LoadedTexture );
             }
         }
@@ -589,24 +590,14 @@ namespace Rudi.UI
             return m_Radius;
         }
 
-        //private static readonly Vector4 MulX = new Vector4 ( 1 ,  1 , -1 , -1 ) ;
-        //private static readonly Vector4 AddX = new Vector4 ( 0 ,  0 ,  1 ,  1 ) ;
-        //private static readonly Vector4 MulY = new Vector4 ( 1 , -1 , -1 ,  1 ) ;
-        //private static readonly Vector4 AddY = new Vector4 ( 0 ,  1 ,  1 ,  0 ) ;
-        //private static readonly Vector4 Half4 = Vector4.one * 0.5f ;
-
-        private bool m_MyOwnMaterialFilled = false ;
+        //private const bool m_MyOwnMaterialFilled = false ; // don't remember, why I included this...
 
         private void updateCornerMaterial ()
         {
-            if ( !m_MyOwnMaterialFilled ) updateCornerMaterial ( matRoundedCorner );
+            //if ( !m_MyOwnMaterialFilled ) updateCornerMaterial ( matRoundedCorner ); // why..?
             updateCornerMaterial ( materialForRendering );
         }
-        //private void updateCornerMaterial ( Material mat )
-        //{
-        //    if ( UseShaderV4 ) updateCornerMaterial4 ( mat );
-        //    else updateCornerMaterial3 ( mat ) ;
-        //}
+
         private static float getBySigma2 ( float sigma )
         {
             const float minus_log2e_half = -0.72134752044448170367996234050095f ; // ( -log₂ ( e ) / 2 ) = -0.72134752
@@ -1118,172 +1109,61 @@ namespace Rudi.UI
             SetMaterialDirty ();
         }
 
+        private static void LogMesh ( Mesh mesh )
+        {
+            var vertices  = mesh.vertices  ;
+            //var indices   = mesh.triangles ;
+            //var colors    = mesh.colors32  ;
+            var texcoords = mesh.uv        ;
+            int num = vertices.Length ;
+            for ( int i = 0 ; i < num ; i++ )
+            {
+                Log.i ( TAG , $"vert [ {i} ] : { vertices[i] } , uv : { texcoords[i] }" ) ;
+            }
+        }
+
         public Texture2D getImageAsTexture ( bool native = true )
         {
             var mesh = getMesh () ;
-            //Mesh mesh = canvasRenderer.GetMesh () ;
-            if ( !mesh ) return null;
-            var mat = new Material ( material ) ;
+            if ( !mesh ) return null ;
+            Material mat = new Material ( material ) ;
+            mat.mainTexture = mainTexture ;
             if ( native )
             {
-                mat.EnableKeyword ( "ROUND_CORNERS" , false );
-                mat.EnableKeyword ( "MAP_CORNER_ALPHA" , false );
-                mat.EnableKeyword ( "DRAW_BORDER" , false );
+                mat.EnableKeyword ( "ROUND_CORNERS"    , false ) ;
+                mat.EnableKeyword ( "MAP_CORNER_ALPHA" , false ) ;
+                mat.EnableKeyword ( "DRAW_BORDER"      , false ) ;
             }
 
-            var rt = drawUIVerticesToTexture ( this , mat , mesh ) ;
-            if ( rt == null )
-            {
-                log ( "rt is null!" );
-                return null;
-            }
-            return ToTexture ( rt );
-        }
-
-        static private readonly Matrix4x4 ortho = Matrix4x4.Ortho ( 0 , 1 , 0 , 1 , -100 , 100 ) ;
-        static private Matrix4x4 m_ModelMatrix = Matrix4x4.identity ;
-        static private Matrix4x4 getModelMatrix ( Vector2 mul , Vector2 add )
-        {
-            m_ModelMatrix.m00 = mul.x;
-            m_ModelMatrix.m11 = mul.y;
-            m_ModelMatrix.m03 = add.x;
-            m_ModelMatrix.m13 = add.y;
-            return m_ModelMatrix;
-        }
-
-        RenderTexture drawUIVerticesToTexture ( Graphic graphic , Material material , Mesh mesh )
-        {
-            if ( null == material )
-            {
-                log ( "Material is null" );
-                return null;
-            }
-
-            var rect = graphic.rectTransform.rect ;
             var dstSize = numPixels_rotated_cropped ;
             if ( !dstSize.hasArea () )
             {
-                log ( "bad size: " + dstSize );
+                log ( "bad size: " + dstSize ) ;
                 return null;
             }
-            //log ( "calculated texture size: " + dstSize ) ;
-            var bySize = Vector2.one / rect.size ;
-            var Add = - rect.min * bySize ;
-            var Mul = bySize ;
-            var ModelMatrix = getModelMatrix ( Mul , Add ) ;
+            var ModelMatrix = GraphicRenderTools.getModelMatrix ( rectTransform.rect ) ;
+            RenderTexture renderTexture = RenderTexture.GetTemporary ( dstSize.x , dstSize.y , 0 , RenderTextureFormat.ARGB32 ) ;
+            var rt = GraphicRenderTools.DrawMeshToTexture ( renderTexture , mesh , ModelMatrix , mat ) ;
 
-            var renderTexture = RenderTexture.GetTemporary ( dstSize.x , dstSize.y , 0 , RenderTextureFormat.ARGB32 );
-            var previous = RenderTexture.active ;
-            RenderTexture.active = renderTexture;
-            material.mainTexture = graphic.mainTexture;
-            if ( !material.SetPass ( 0 ) )
-            {
-                log ( "drawToTexture() - pass failed" );
-                return null;
-            }
-
-
-            GL.Color ( graphic.color );
-            GL.PushMatrix ();
-
-            //Matrix4x4 projectionMatrix = GL.GetGPUProjectionMatrix ( ortho , true ) ;
-            var projectionMatrix = ortho ;
-
-            if ( false && Camera.current != null )
-            {
-                var cm = Camera.current.worldToCameraMatrix ;
-                var ic = cm.inverse ;
-                log ( "adding camera matrix:\n" + cm + "\n\n" + ic );
-                log ( "prev proj:\n" + projectionMatrix );
-                projectionMatrix *= ic;
-                log ( "now proj:\n" + projectionMatrix );
-            }
-            GL.LoadProjectionMatrix ( projectionMatrix );
-            GL.modelview = ModelMatrix;
-            GL.Clear ( false , true , Color.clear ); // fill transparent
-
-            var UseDrawMesh = false ;
-            //UseDrawMesh = true;
-
-
-            if ( UseDrawMesh )
-            {
-                // https://gist.github.com/nothke/e5214489f5690bffa86e2db1563e6fc9
-                // https://github.com/nothke/unity-utils/blob/master/Runtime/RTUtils.cs
-
-                //logVertices ( mesh , ModelMatrix , projectionMatrix );
-                GL.invertCulling = true;
-
-                //Graphics.DrawMeshNow ( mesh , ModelMatrix );
-                Graphics.DrawMeshNow ( mesh , Matrix4x4.identity );
-
-                GL.invertCulling = false;
-            }
-            else
-            {
-                // get mesh data
-
-                var vertices  = mesh.vertices  ;
-                var indices   = mesh.triangles ;
-                var colors    = mesh.colors32  ;
-                var texcoords = mesh.uv        ;
-
-
-                // start rendering
-
-                GL.Begin ( GL.TRIANGLES );
-
-                foreach ( var index in indices )
-                {
-                    GL.Color ( colors [index] );
-                    GL.TexCoord ( texcoords [index] );
-                    GL.Vertex ( vertices [index] );
-                }
-
-                GL.End ();
-            }
-
-
-            GL.PopMatrix ();
-
-            //material.color = Color.white ;
-            material.mainTexture = null;
-
-            RenderTexture.active = previous;
-            return renderTexture;
+            Texture2D Result = null ;
+            if ( rt != null ) Result = GraphicRenderTools.ToTexture ( rt ) ;
+            RenderTexture.ReleaseTemporary ( renderTexture ) ;
+            Utils.DestroyObject ( mat ) ;
+            return Result ;
         }
-        private Texture2D ToTexture ( RenderTexture renderTexture , TextureFormat format = TextureFormat.RGBA32 )
-        {
-            //log ( "ToTexture ()" ) ;
-            var Result = new Texture2D ( renderTexture.width , renderTexture.height , format , false ) ;
-            var previous = RenderTexture.active ;
-            RenderTexture.active = renderTexture;
-            Result.ReadPixels ( new Rect ( 0 , 0 , renderTexture.width , renderTexture.height ) , 0 , 0 , false );
-            Result.Apply ( false , makeNoLongerReadable: false );
-            RenderTexture.active = previous;
-            RenderTexture.ReleaseTemporary ( renderTexture );
-            //processTexture ( Result ) ;
-            Result.filterMode = FilterMode.Bilinear;
-            Result.wrapMode = TextureWrapMode.Clamp;
-            Result.hideFlags = HideFlags.HideAndDontSave; // HideAndDontSave DontSave
-                                                          //log ( "ToTexture () - finished" );
-            return Result;
-        }
+
 
         protected override void OnDestroy ()
         {
-            if ( m_TextureLoader != null )
-            {
-                //Log.i ( TAG , $"OnDestroy ABORT on Object: {gameObject.name} (ID: {gameObject.GetInstanceID ()})" );
-                m_TextureLoader.abort ();
-            }
+            //if ( m_TextureLoader != null )
+            //{
+            //    //Log.i ( TAG , $"OnDestroy ABORT on Object: {gameObject.name} (ID: {gameObject.GetInstanceID ()})" );
+            //    m_TextureLoader.abort ();
+            //}
 
-            //m_TextureLoader?.abort () ;
+            m_TextureLoader?.abort ();
             DestroyLoadedTexture ();
-            if ( null != m_MaterialRoundedCorner )
-            {
-                Utils.DestroyObjectAndZero ( ref m_MaterialRoundedCorner );
-            }
+            Utils.DestroyObjectAndZero ( ref m_MaterialRoundedCorner );
             base.OnDestroy ();
         }
 
@@ -1294,14 +1174,14 @@ namespace Rudi.UI
             base.OnEnable ();
             if ( m_Started )
             {
-                m_DropShadow.OnEnable ();
+                m_DropShadow.OnEnable () ;
             }
         }
 
         protected override void OnDisable ()
         {
-            base.OnDisable ();
-            m_DropShadow.OnDisable ();
+            base.OnDisable () ;
+            m_DropShadow.OnDisable () ;
         }
 
         protected override void Start ()
@@ -1314,7 +1194,7 @@ namespace Rudi.UI
             m_DropShadow.OnEnable ();
         }
 
-        public MonoBehaviour getMonoObject () => this;
+        public MonoBehaviour getMonoObject () => this ;
 
         public void propertiesObjectChanged ( DropShadow.MessageReason reason )
         {

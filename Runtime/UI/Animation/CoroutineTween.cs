@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using Rudi.RMath;
+using Rudi.Core;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -41,7 +42,7 @@ namespace Rudi.UI
         //public bool deactivateIfOff { get => m_DeactivateIfOff ; set => m_DeactivateIfOff = value ; }
 
         private bool m_Dest ;
-        private IEnumerator m_Tween = null ;
+        private Coroutine  m_RunningCoroutine = null ;
         private IEnumerator Start ( float start , float dest , float duration )
         {
             //Log.i ( TAG , m_CoroutineContainer.gameObject , $"in Coroutine ( {start} , {dest} , {duration} ) = " );
@@ -52,23 +53,27 @@ namespace Rudi.UI
                 var val = Mathf.Lerp ( start , dest , perc ) ;
                 var step = SmoothStep.step ( mode , val , power ) ;
                 onValueChanged.Invoke ( step );
-                yield return null;
-                elapsedTime += Time.deltaTime;
+                yield return Utils.WaitForEndOfFrame ;
+                elapsedTime += Time.deltaTime ;
             } while ( elapsedTime < duration );
             onValueChanged.Invoke ( dest );
             OnFinished.Invoke ( m_Dest );
-            m_Tween = null;
+            m_RunningCoroutine = null;
             //Log.i ( TAG , m_CoroutineContainer.gameObject , "Coroutine - finished" );
 
         }
 
         public bool valid => null != m_CoroutineContainer;
-        public bool isTweening => null != m_Tween;
+        public bool isTweening => null != m_RunningCoroutine;
 
         private void StartTween ( float start , float dest , float duration )
         {
-            m_Tween = Start ( start , dest , duration );
-            m_CoroutineContainer.StartCoroutine ( m_Tween );
+            //m_Tween = Start ( start , dest , duration );
+            //m_CoroutineContainer.StartCoroutine ( m_Tween );
+
+            // advice from Google-AI
+            // StartCoroutine nimmt den IEnumerator an, gibt aber ein echtes Coroutine-Objekt zurück
+            m_RunningCoroutine = m_CoroutineContainer.StartCoroutine ( Start ( start , dest , duration ) ) ;
         }
 
         public void tween ( bool dest , float duration )
@@ -93,10 +98,10 @@ namespace Rudi.UI
 
         public void StopTween ()
         {
-            if ( m_Tween != null )
+            if ( m_RunningCoroutine != null )
             {
-                m_CoroutineContainer.StopCoroutine ( m_Tween );
-                m_Tween = null;
+                m_CoroutineContainer.StopCoroutine ( m_RunningCoroutine );
+                m_RunningCoroutine = null;
             }
         }
         public void OnDestroy ()
@@ -120,7 +125,7 @@ namespace Rudi.UI
         public delegate float ON_STEP ( float perc );
         public ON_STEP onStep = null ;
 
-        protected IEnumerator m_Tween = null ;
+        protected Coroutine m_RunningCoroutine = null ;
         protected abstract void performLerp ( float step );
         private IEnumerator Start ( float duration )
         {
@@ -130,17 +135,17 @@ namespace Rudi.UI
                 var perc = elapsedTime / duration ;
                 var step = onStep != null ? onStep ( perc ) : SmoothStep.step ( mode , perc , power ) ;
                 performLerp ( step );
-                yield return null;
-                elapsedTime += Time.deltaTime;
+                yield return Utils.WaitForEndOfFrame ;
+                elapsedTime += Time.deltaTime ;
             } while ( elapsedTime < duration );
             performLerp ( 1 );
             //finished () ;
             OnFinished.Invoke ();
-            m_Tween = null;
+            m_RunningCoroutine = null;
         }
 
         public bool valid => null != m_CoroutineContainer;
-        public bool isTweening => null != m_Tween;
+        public bool isTweening => null != m_RunningCoroutine;
 
         protected SmoothStep.Mode m_Mode = SmoothStep.Mode.Smooth1 ;
         public SmoothStep.Mode mode
@@ -153,16 +158,20 @@ namespace Rudi.UI
 
         protected void StartTween ( float duration )
         {
-            m_Tween = Start ( duration );
-            m_CoroutineContainer.StartCoroutine ( m_Tween );
+            //m_Tween = Start ( duration );
+            //m_CoroutineContainer.StartCoroutine ( m_Tween );
+            // advice from Google-AI
+            // StartCoroutine nimmt den IEnumerator an, gibt aber ein echtes Coroutine-Objekt zurück
+            m_RunningCoroutine = m_CoroutineContainer.StartCoroutine ( Start ( duration ) ) ;
+
         }
 
         public void StopTween ()
         {
-            if ( m_Tween != null )
+            if ( m_RunningCoroutine != null )
             {
-                m_CoroutineContainer.StopCoroutine ( m_Tween );
-                m_Tween = null;
+                m_CoroutineContainer.StopCoroutine ( m_RunningCoroutine );
+                m_RunningCoroutine = null;
             }
         }
     }

@@ -15,8 +15,8 @@ using UnityEngine.UI;
 
 namespace Rudi.UI
 {
-    [ExecuteAlways]
-    [RequireComponent ( typeof ( Graphic ) )]
+    [ ExecuteAlways ]
+    [ RequireComponent ( typeof ( Graphic ) ) ]
     public abstract class CanvasElement : MonoBehaviour, ICanvasElement
     {
         private static readonly string TAG = "Rudis CanvasElement";
@@ -34,22 +34,24 @@ namespace Rudi.UI
             EditorUtility.SetDirty ( this );
         }
 
-        [ContextMenu ( "Switch on all Logs" )]
+        [ ContextMenu ( "Switch on all Logs" ) ]
         private void SwitchOnAllLogs ()
         {
-            var Objects = FindObjectsOfType < CanvasElement > ( true ) ;
+            //var Objects = FindObjectsOfType < CanvasElement > ( true ) ;
+            var Objects = FindObjectsByType < CanvasElement > ( FindObjectsInactive.Include , FindObjectsSortMode.None ) ;
             foreach ( var ss in Objects )
             {
-                ss.m_Log = true;
+                ss.m_Log = true ;
             }
-            EditorUtility.SetDirty ( this );
+            EditorUtility.SetDirty ( this ) ;
         }
 
 
         [ContextMenu ( "Switch off all Logs" )]
         private void SwitchOffAllLogs ()
         {
-            var Objects = FindObjectsOfType < CanvasElement > ( true ) ;
+            //var Objects = FindObjectsOfType < CanvasElement > ( true ) ;
+            var Objects = FindObjectsByType < CanvasElement > ( FindObjectsInactive.Include , FindObjectsSortMode.None ) ;
             foreach ( var ss in Objects )
             {
                 ss.m_Log = false;
