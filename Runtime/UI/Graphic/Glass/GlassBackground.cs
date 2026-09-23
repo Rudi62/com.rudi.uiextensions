@@ -105,6 +105,14 @@ namespace Rudi.UI
         [ SerializeField ] int m_ShadowDarkening = 10 ;
         [ Range ( 0 , 1 ) ]
         [ SerializeField ] float m_ShadowOffsetY = 1 ;
+        [ Range ( 0 , 1 ) ]
+        [ SerializeField ] private float m_Caustic = 0 ;
+        [ Range ( 0 , 1 ) ]
+        [ SerializeField ] private float m_CausticPosition = 0.65f ;
+        [ Range ( 0 , 1 ) ]
+        [ SerializeField ] private float m_CausticSharpness = 0 ;
+        [Range(-10, 10)]
+        [SerializeField] private int m_CausticAsymmetry = 0;
 
 #pragma warning disable 649
         private DrivenRectTransformTracker m_Tracker;
@@ -389,6 +397,7 @@ namespace Rudi.UI
             }
         }
 
+        public bool canUseCaustic => m_Layerable ;
 
         private Material m_MaterialGlassBlurLayerable = null ;
         private Material matGlassBlurLayerable
@@ -530,13 +539,19 @@ namespace Rudi.UI
             var HasRotation = 0 != m_Rotation && ( HasBorder || HasReflection ) ;
             var HasShadow = hasShadow ;
 
-            mat.EnableKeyword ( "USE_LINEAR_SAMPLING" , linearSampling );
+            mat.EnableKeyword ( "USE_LINEAR_SAMPLING" , linearSampling ) ;
             //mat.EnableKeyword ( "ROUND_CORNERS"   , HasRoundCorners ) ;
-            mat.EnableKeyword ( "DRAW_BORDER" , HasBorder );
-            mat.EnableKeyword ( "DRAW_REFLECTION" , HasReflection );
-            mat.EnableKeyword ( "CALC_REFLECTION_HORIZONTAL" , HasReflection && m_CalcReflectionHoriz );
-            mat.EnableKeyword ( "ROTATION" , HasRotation ); // HasRotation
+            mat.EnableKeyword ( "DRAW_BORDER" , HasBorder ) ;
+            mat.EnableKeyword ( "USE_CAUSTIC" , HasBorder && m_Caustic > 0 && canUseCaustic ) ;
+            mat.EnableKeyword ( "DRAW_REFLECTION" , HasReflection ) ;
+            mat.EnableKeyword ( "CALC_REFLECTION_HORIZONTAL" , HasReflection && m_CalcReflectionHoriz ) ;
+            mat.EnableKeyword ( "ROTATION" , HasRotation ) ; // HasRotation
             mat.EnableKeyword ( "DROP_SHADOW" , HasShadow );
+
+            //mat.EnableKeyword ( "NO_BORDER" , !HasBorder ) ;
+            //mat.EnableKeyword ( "NO_SHADOW" , !HasShadow ) ;
+            //mat.EnableKeyword ( "REFLECTION_STANDARD" , HasReflection && !m_CalcReflectionHoriz ) ;
+            //mat.EnableKeyword ( "REFLECTION_HORIZONTAL" , HasReflection && m_CalcReflectionHoriz ) ;
 
             switchBorderProfile ( mat , m_BorderProfile );
 
@@ -618,7 +633,16 @@ namespace Rudi.UI
             if ( HasShadow )
             {
                 mat.SetFloat ( "_ShadowDarkening" , DropShadow.getAdaptedShadowAlpha ( 0.01f * m_ShadowDarkening ) ) ;
+                //mat.SetFloat ( "_Caustic"  , m_Caustic ) ;
                 mat.SetFloat ( "_ShadowOffsetY" , m_ShadowOffsetY );
+                float baseValue = 1.25f;
+                float realAsymmetry = Mathf.Pow(baseValue, m_CausticAsymmetry);
+                float asymInner = realAsymmetry ;
+                float asymOuter = 1.0f / realAsymmetry ;
+                float sharpness = Mathf.Pow ( m_CausticSharpness , 0.3f ) ;
+                Vector4 causticVector = new Vector4 ( m_Caustic , sharpness , asymInner , asymOuter ) ;
+                mat.SetVector ( "_Caustic" , causticVector ) ;
+                mat.SetFloat ( "_CausticPosition" , m_CausticPosition ) ;
             }
         }
 
@@ -760,6 +784,10 @@ namespace Rudi.UI
         SerializedProperty m_ShowShadow ;
         SerializedProperty m_ShadowDarkening ;
         SerializedProperty m_ShadowOffsetY ;
+        SerializedProperty m_Caustic ;
+        SerializedProperty m_CausticPosition ;
+        SerializedProperty m_CausticSharpness ;
+        SerializedProperty m_CausticAsymmetry ;
 
         protected override void OnEnable ()
         {
@@ -805,6 +833,10 @@ namespace Rudi.UI
             m_ShowShadow = serializedObject.FindProperty ( "m_ShowShadow" );
             m_ShadowDarkening = serializedObject.FindProperty ( "m_ShadowDarkening" );
             m_ShadowOffsetY = serializedObject.FindProperty ( "m_ShadowOffsetY" );
+            m_Caustic = serializedObject.FindProperty ( "m_Caustic" );
+            m_CausticPosition = serializedObject.FindProperty ( "m_CausticPosition" );
+            m_CausticSharpness = serializedObject.FindProperty ( "m_CausticSharpness" );
+            m_CausticAsymmetry = serializedObject.FindProperty ( "m_CausticAsymmetry" );
         }
 
         public override void OnInspectorGUI ()
@@ -913,6 +945,16 @@ namespace Rudi.UI
                 {
                     EditorGUILayout.PropertyField ( m_ShadowDarkening );
                     EditorGUILayout.PropertyField ( m_ShadowOffsetY );
+                    if ( myObject.canUseCaustic )
+                    {
+                        EditorGUILayout.PropertyField ( m_Caustic );
+                        if ( m_Caustic.floatValue > 0f )
+                        {
+                            EditorGUILayout.PropertyField ( m_CausticPosition );
+                            EditorGUILayout.PropertyField ( m_CausticSharpness );
+                            EditorGUILayout.PropertyField ( m_CausticAsymmetry );
+                        }
+                    }
                 }
             }
 

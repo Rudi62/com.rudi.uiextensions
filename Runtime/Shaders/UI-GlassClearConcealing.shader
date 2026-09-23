@@ -62,6 +62,15 @@
 	CGINCLUDE
 #include "glass_shared.cginc"	
 //#include "UnityUI.cginc"
+#pragma target 3.0
+#pragma multi_compile_local _ USE_LINEAR_SAMPLING
+#pragma multi_compile_local _ DRAW_BORDER
+#pragma multi_compile_local _ ROTATION
+#pragma multi_compile_local _ DROP_SHADOW
+#pragma multi_compile_local _ USE_CAUSTIC
+#pragma multi_compile_local _ DRAW_REFLECTION
+#pragma multi_compile_local _ CALC_REFLECTION_HORIZONTAL
+#pragma multi_compile_local BP_ROUND BP_BULGE BP_BEVEL
 
     sampler2D _BackgroundTexture ;
     float4 _BackgroundTexture_TexelSize ;
@@ -108,16 +117,16 @@
         Pass
         {
             CGPROGRAM
-            #pragma multi_compile_local _ USE_LINEAR_SAMPLING
-            #pragma multi_compile_local _ DRAW_BORDER
-            #pragma multi_compile_local _ DRAW_REFLECTION
-            #pragma multi_compile_local _ CALC_REFLECTION_HORIZONTAL
-            #pragma multi_compile_local _ ROTATION
-            #pragma multi_compile_local _ DROP_SHADOW
-            #pragma multi_compile_local BP_ROUND BP_BULGE //BP_BEVEL
+            //#pragma multi_compile_local _ USE_LINEAR_SAMPLING
+            //#pragma multi_compile_local _ DRAW_BORDER
+            //#pragma multi_compile_local _ DRAW_REFLECTION
+            //#pragma multi_compile_local _ CALC_REFLECTION_HORIZONTAL
+            //#pragma multi_compile_local _ ROTATION
+            //#pragma multi_compile_local _ DROP_SHADOW
+            //#pragma multi_compile_local BP_ROUND BP_BULGE //BP_BEVEL
 
-            #pragma target 3.0
-            #pragma fragmentoption ARB_precision_hint_fastest
+            //#pragma target 3.0
+            //#pragma fragmentoption ARB_precision_hint_fastest
             #pragma vertex vert
             #pragma fragment frag
             float4 frag ( v2f i ) : COLOR

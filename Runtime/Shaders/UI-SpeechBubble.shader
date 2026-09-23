@@ -448,6 +448,104 @@ Shader "Rudi/UI/SpeechBubble"
                 //return isInside < 0 ? -dist : dist ;                                   // return negative dist if p is inside
             }
 
+            // suggestion of Google-AI - failed
+            float sd_V1 ( float2 p , float4 d12 , float4 p1_dot12 )
+            {
+                // d12 = ( d1.x , d1.y , d2.x , d2.y )
+                // p1_dot12 = ( p1.x , p1.y , 1 / dot(d1, d1) , dot(d1, d2) )
+                float2 d1 = d12.xy ;
+                float2 d2 = d12.zw ;
+                float2 p1 = p1_dot12.xy ;
+                float by_dot_d1 = p1_dot12.z ; // 1.0f / dot(d1, d1)
+                float dot_d1_d2 = p1_dot12.w ; // dot(d1, d2) von C# vorberchnet
+
+                // Vektor von der Spitze (p1) zum aktuellen Pixel
+                float2 v = p - p1 ;
+
+                // --- FLANKE 1 PROJEKTION ---
+                // Nutzt das vorberechnete 1/dot(d1,d1) aus C# für die Projektion!
+                float h1 = max ( dot ( v , d1 ) * by_dot_d1 , 0.0 );
+                float2 pq1 = v - d1 * h1;
+                float distSq1 = dot ( pq1 , pq1 );
+
+                // --- FLANKE 2 PROJEKTION ---
+                // Da wir dot(d2, d2) nicht in den Registern haben, aber dot(d1, d1) identisch ist
+                // (da der Pfeil symmetrisch ist), können wir by_dot_d1 auch für d2 nutzen!
+                float h2 = max ( dot ( v , d2 ) * by_dot_d1 , 0.0 );
+                float2 pq2 = v - d2 * h2;
+                float distSq2 = dot ( pq2 , pq2 );
+
+                // Kleinste quadrierte Distanz zu den Flanken ermitteln
+                float minD2 = min ( distSq1 , distSq2 );
+
+                // --- INNERHALB/AUSSEN SIGNAL (Kreuzprodukt/Determinante) ---
+                // Da v der Vektor von der Spitze ist, testen wir, ob das Pixel 
+                // mathematisch im Raum zwischen d1 und d2 liegt.
+                float s1 = v.x * d1.y - v.y * d1.x;
+                float s2 = v.x * d2.y - v.y * d2.x;
+                float sign = ( s1 * s2 < 0.0 ) ? -1.0 : 1.0;
+
+                // Nur ein einziges Mal am Ende die Wurzel ziehen
+                return sqrt ( minD2 ) * sign;
+            }
+
+            // suggestion of Google-AI - failed more
+            float sd_V2 ( float2 p , float4 d12 , float4 p1_dot12 )
+            {
+                float2 d1 = d12.xy ;
+                float2 d2 = d12.zw ;
+                float2 p1 = p1_dot12.xy ;
+                float by_dot_d1 = p1_dot12.z ;
+                float dot_d1_d2 = p1_dot12.w ;
+
+                // Vektor von der Spitze (p1) zum Pixel
+                float2 v = p - p1 ;
+
+                // --- FLANKE 1 PROJEKTION ---
+                float h1 = max ( dot ( v , d1 ) * by_dot_d1 , 0.0 );
+                float2 pq1 = v - d1 * h1;
+                float distSq1 = dot ( pq1 , pq1 );
+
+                // --- FLANKE 2 PROJEKTION ---
+                float h2 = max ( dot ( v , d2 ) * by_dot_d1 , 0.0 );
+                float2 pq2 = v - d2 * h2;
+                float distSq2 = dot ( pq2 , pq2 );
+
+                // Kleinste ununterbrochene Distanz zu den Flanken
+                float minD2 = min ( distSq1 , distSq2 );
+
+                // --- INNEN/AUSSEN WEICHE (Keil) ---
+                float s1 = v.x * d1.y - v.y * d1.x;
+                float s2 = v.x * d2.y - v.y * d2.x;
+                float sign = ( s1 * s2 < 0.0 ) ? -1.0 : 1.0;
+
+                float finalSDF = sqrt ( minD2 ) * sign;
+
+                // --- DER HALBRAUM-SCHILD (NEU!) ---
+                // Der Vektor der Basis-Kante ist d2 - d1 (von p0 zu p2)
+                float2 baseEdge = d2 - d1;
+                // Wir projizieren das Pixel relativ zum linken Basispunkt (p0)
+                // p0 selbst ist einfach p1 + d1
+                float2 vBase = p - ( p1 + d1 );
+
+                // Das Kreuzprodukt zeigt uns, ob das Pixel hinter der Basis-Linie liegt
+                // (also tief im Inneren der Sprechblase)
+                float baseSign = vBase.x * baseEdge.y - vBase.y * baseEdge.x;
+
+                // Da wir wissen, auf welcher Seite der Basis die Spitze liegt,
+                // schneiden wir den unendlichen Keil hart ab, sobald wir die Basis überschreiten.
+                // Wenn wir hinter der Basis sind, wird die Pfeil-SDF fließend neutralisiert.
+                if ( baseSign < 0.0 )
+                {
+                    // Wir setzen die Distanz auf einen großen positiven Wert, 
+                    // damit die anschließende opSmoothUnion mit der Box den Keil hier ignoriert!
+                    finalSDF = 9999.0;
+                }
+
+                return finalSDF;
+            }
+
+
             float smoothstep1 ( float border , float width , float value )
             {
                 return smoothstep ( border - width , border + width , value ) ;

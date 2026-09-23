@@ -125,7 +125,7 @@ namespace Rudi.Core
 
         static public T loadPrefab<T> ( string name ) where T : MonoBehaviour
         {
-            var FullName = "ModuleResources/" + name ;
+            var FullName = name ;
             var Result = Resources.Load < T > ( FullName ) ;
             if ( null == Result ) Log.e ( TAG , "couldn't load prefab: " + FullName );
             return Result;

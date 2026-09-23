@@ -20,7 +20,7 @@ namespace Rudi.Core
             {
                 if ( null == m_PrefabAssemblage )
                 {
-                    m_PrefabAssemblage = Resources.Load<PrefabAssemblage> ( "ModuleResources/PrefabAssemblagePrefab" );
+                    m_PrefabAssemblage = Resources.Load<PrefabAssemblage> ( "PrefabAssemblagePrefab" );
                 }
                 return m_PrefabAssemblage;
             }

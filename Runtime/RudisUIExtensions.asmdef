@@ -2,7 +2,8 @@
     "name": "Rudis UI Extensions",
     "rootNamespace": "Rudi.UI",
     "references": [
-        "GUID:478a2357cc57436488a56e564b08d223"
+        "Unity.UGUI",
+        "Unity.EditorCoroutines.Editor"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

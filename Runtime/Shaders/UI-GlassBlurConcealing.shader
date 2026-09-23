@@ -51,6 +51,15 @@ Shader "Rudi/UI/GlassBlurConcealing"
 	CGINCLUDE
 	#include "glass_shared.cginc"	
     //#include "UnityUI.cginc"
+#pragma target 3.0
+#pragma multi_compile_local _ USE_LINEAR_SAMPLING
+#pragma multi_compile_local _ DRAW_BORDER
+#pragma multi_compile_local _ ROTATION
+#pragma multi_compile_local _ DROP_SHADOW
+#pragma multi_compile_local _ USE_CAUSTIC
+#pragma multi_compile_local _ DRAW_REFLECTION
+#pragma multi_compile_local _ CALC_REFLECTION_HORIZONTAL
+#pragma multi_compile_local BP_ROUND BP_BULGE BP_BEVEL
 
     sampler2D _GrabTexture ;
     float4 _GrabTexture_TexelSize;
@@ -81,27 +90,12 @@ Shader "Rudi/UI/GlassBlurConcealing"
 
         GrabPass
         {
-            //Tags
-            //{
-            //    "LightMode" = "Always"
-            //    "Queue" = "Background"
-            //}
             "_BackgroundTexture"
         }
 
         Pass
         {
             CGPROGRAM
-            #pragma multi_compile_local _ USE_LINEAR_SAMPLING
-            //#pragma multi_compile_local _ ROUND_CORNERS
-            #pragma multi_compile_local _ DRAW_BORDER
-            #pragma multi_compile_local _ DRAW_REFLECTION
-            #pragma multi_compile_local _ CALC_REFLECTION_HORIZONTAL
-            #pragma multi_compile_local _ ROTATION
-            #pragma multi_compile_local _ DROP_SHADOW
-            #pragma multi_compile_local BP_ROUND BP_BULGE BP_BEVEL
-
-            #pragma target 3.0
             #pragma vertex vert
             #pragma fragment frag
             float4 frag ( v2f i ) : COLOR
@@ -131,16 +125,16 @@ Shader "Rudi/UI/GlassBlurConcealing"
         Pass
         {
             CGPROGRAM
-            #pragma multi_compile_local _ USE_LINEAR_SAMPLING
-            //#pragma multi_compile_local _ ROUND_CORNERS
-            #pragma multi_compile_local _ DRAW_BORDER
-            #pragma multi_compile_local _ DRAW_REFLECTION
-            #pragma multi_compile_local _ CALC_REFLECTION_HORIZONTAL
-            #pragma multi_compile_local _ ROTATION
-            #pragma multi_compile_local _ DROP_SHADOW
-            #pragma multi_compile_local BP_ROUND BP_BULGE BP_BEVEL
+            //#pragma multi_compile_local _ USE_LINEAR_SAMPLING
+            ////#pragma multi_compile_local _ ROUND_CORNERS
+            //#pragma multi_compile_local _ DRAW_BORDER
+            //#pragma multi_compile_local _ DRAW_REFLECTION
+            //#pragma multi_compile_local _ CALC_REFLECTION_HORIZONTAL
+            //#pragma multi_compile_local _ ROTATION
+            //#pragma multi_compile_local _ DROP_SHADOW
+            //#pragma multi_compile_local BP_ROUND BP_BULGE BP_BEVEL
 
-            #pragma target 3.0
+            //#pragma target 3.0
             #pragma vertex vert
             #pragma fragment frag
             float4 frag ( v2f i ) : COLOR
