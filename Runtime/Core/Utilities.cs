@@ -90,6 +90,11 @@ namespace Rudi.Core.Utilities
         }
     }
 
+    public static class Angle
+    {
+        public static float getPlusMinus ( float angle ) => ( angle + 540f ) % 360f - 180f ;
+    }
+
     public class Interpol
     {
         // input  : 0 ... 1

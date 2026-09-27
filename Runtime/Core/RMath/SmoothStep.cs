@@ -40,6 +40,7 @@ namespace Rudi.RMath
         private static float ease_out_exp_impl ( float x , float p ) => 1 - ease_in_exp_impl ( 1 - x , p );
 
         private static float cos_impl ( float x ) => ( 1.0f - Mathf.Cos ( x * Mathf.PI ) ) * 0.5f;
+        private static float algebraicSigmoid_impl ( float x , float k ) => ( k * x ) / ( 1f + ( k - 1f ) * Mathf.Abs ( x ) ) ;
 
         public static float step ( Mode mode , float x , float p = 1.2f )
         {
@@ -70,5 +71,6 @@ namespace Rudi.RMath
         public static float ease_out4 ( float x ) => ease_out4_impl ( Mathf.Clamp01 ( x ) );
         public static float ease_out5 ( float x ) => ease_out5_impl ( Mathf.Clamp01 ( x ) );
         public static float cos ( float x ) => cos_impl ( Mathf.Clamp01 ( x ) );
+        public static float algebraicSigmoid ( float x , float k ) => algebraicSigmoid_impl ( Mathf.Clamp ( x , -1f , 1f ) , k ) ;
     }
 }

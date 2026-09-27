@@ -82,6 +82,16 @@ namespace Rudi.UI
             clearCache ();
         }
 
+        private void OnRectTransformDimensionsChange ()
+        {
+            // Sobald sich der Bildschirm dreht und die UI sich neu anordnet,
+            // erzwingen wir eine komplette Neuberechnung der Safe Area.
+            if ( m_bStarted && isActiveAndEnabled )
+            {
+                recalc ();
+            }
+        }
+
         private void clearCache ()
         {
             m_Canvas = null;
