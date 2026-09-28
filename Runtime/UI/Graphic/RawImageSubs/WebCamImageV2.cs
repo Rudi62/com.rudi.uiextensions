@@ -112,16 +112,16 @@ namespace Rudi
         {
             switch ( quality )
             {
-                case Quality.SD    : return (  640 ,  480 ) ;
-                case Quality.HD : return ( 1280 ,  720 ) ;
-                case Quality.FHD   : return ( 1920 , 1080 ) ;
-                default: return ( 640 , 480 ) ;
+                case Quality.SD  : return (  640 ,  480 ) ;
+                case Quality.HD  : return ( 1280 ,  720 ) ;
+                case Quality.FHD : return ( 1920 , 1080 ) ;
+                default : return ( 640 , 480 ) ;
             }
         }
 
         public void startPlaying ( Quality quality )
         {
-#if !UNITY_EDITOR
+#if !UNITY_EDITOR1
             //Log.i ( TAG , $"startPlaying ( { quality } )" ) ;
             if ( webCamTexture.isPlaying ) webCamTexture.Stop () ;
 
@@ -139,6 +139,16 @@ namespace Rudi
                 webCamTexture.requestedHeight = res.height ;
             }
 #endif
+            startPlaying () ;
+        }
+
+        public void startPlaying ( Webcams.Identifier identifier )
+        {
+            if ( webCamTexture.isPlaying ) webCamTexture.Stop ();
+            webCamTexture.deviceName      = identifier.name   ;
+            webCamTexture.requestedWidth  = identifier.width  ;
+            webCamTexture.requestedHeight = identifier.height ;
+            Log.i ( TAG , "webcam resolution = " + identifier.getResolution () ) ;
             startPlaying () ;
         }
 

@@ -16,10 +16,17 @@ namespace Rudi.Core
             public Identifier () { }
             public Identifier ( string name , int width , int height )
             {
-                this.name = name;
-                this.width = width;
-                this.height = height;
+                this.name   = name   ;
+                this.width  = width  ;
+                this.height = height ;
             }
+            public Identifier ( WebCamDevice device , Resolution res )
+            {
+                name   = device.name ;
+                width  = res.width ;
+                height = res.height ;
+            }
+            public Vector2Int getResolution () => new Vector2Int ( width , height ) ;
         }
 
         public static void queryCams ()
@@ -58,7 +65,66 @@ namespace Rudi.Core
             }
         }
 
-        private static Identifier m_BestWebCam = null ;
+        private static Identifier m_BestWebCam          = null ;
+        private static Identifier m_BestWebCamUltraWide = null ;
+        private static Identifier m_BestWebCamWide      = null ;
+        private static Identifier m_BestWebCamTele      = null ;
+
+        public static Identifier getBestWebCam ( WebCamKind kind )
+        {
+            if ( null == m_BestWebCamWide ) queryWebCams () ;
+            switch ( kind )
+            {
+                case WebCamKind.WideAngle      : return m_BestWebCamWide ;
+                case WebCamKind.Telephoto      : return m_BestWebCamTele ;
+                case WebCamKind.UltraWideAngle : return m_BestWebCamUltraWide ;
+                default : return m_BestWebCamWide ;
+            }
+        }
+
+        private static Identifier getBest ( WebCamDevice [] device , Resolution [] res , int [] numPixels , WebCamKind kind , Identifier fallback )
+        {
+            int index = ( int ) kind ;
+            if ( 0 == numPixels [index] ) return fallback ;
+            return new Identifier ( device [ index ] , res [ index ] ) ;
+        }
+
+        private static void queryWebCams ()
+        {
+            int numTypes = System.Enum.GetValues ( typeof ( WebCamKind ) ) . Length ;
+            Resolution [] BestResolutions = new Resolution [ numTypes ] ;
+            WebCamDevice [] BestDevices = new WebCamDevice [ numTypes ] ;
+            int [] BestNumPixels = new int [ numTypes ] ;
+            for ( int i = 0 ; i < numTypes ; i++ )
+            {
+                BestNumPixels [ i ] = 0 ;
+            }
+            var devices = WebCamTexture.devices ;
+            var fallback = new Identifier ( devices [0].name , 0 , 0 );
+            if ( !Utils.hasData ( devices ) ) return ; // no devices
+            foreach ( var device in devices )
+            {
+                if ( device.isFrontFacing ) continue; // no front camera
+                var kind = device.kind ;
+                int KindIndex = ( int ) kind ;
+                var res = device.availableResolutions ;
+                if ( !Utils.hasData ( res ) ) continue;
+
+                foreach ( var r in res )
+                {
+                    if ( r.NumPixels () > BestNumPixels [ KindIndex ] )
+                    {
+                        BestDevices     [ KindIndex ] = device ;
+                        BestResolutions [ KindIndex ] = r ;
+                        BestNumPixels   [ KindIndex ] = r.NumPixels () ;
+                    }
+                }
+            }
+            m_BestWebCamWide      = getBest ( BestDevices , BestResolutions , BestNumPixels , WebCamKind.WideAngle      , fallback ) ;
+            m_BestWebCamUltraWide = getBest ( BestDevices , BestResolutions , BestNumPixels , WebCamKind.UltraWideAngle , m_BestWebCamWide ) ;
+            m_BestWebCamTele      = getBest ( BestDevices , BestResolutions , BestNumPixels , WebCamKind.Telephoto      , m_BestWebCamWide ) ;
+        }
+
         public static Identifier bestWebCam
         {
             get
@@ -81,10 +147,10 @@ namespace Rudi.Core
         {
             switch ( kind ) // the more focal length, the better
             {
-                case WebCamKind.UltraWideAngle: return 1; // worst choice
-                case WebCamKind.WideAngle: return 2; // better
-                case WebCamKind.Telephoto: return 3; // best
-                default: return 0;
+                case WebCamKind.UltraWideAngle : return 1 ; // worst choice
+                case WebCamKind.WideAngle : return 2 ; // better
+                case WebCamKind.Telephoto : return 3 ; // best
+                default: return 0 ;
             }
         }
 
