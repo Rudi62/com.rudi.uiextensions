@@ -1142,6 +1142,10 @@ namespace Rudi.UI
                 return null;
             }
             var ModelMatrix = GraphicRenderTools.getModelMatrix ( rectTransform.rect ) ;
+#if UNITY_IOS || UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
+             ModelMatrix.m11 *= -1f ;
+             ModelMatrix.m13 = 1f - m_ModelMatrix.m13 ;
+#endif
             RenderTexture renderTexture = RenderTexture.GetTemporary ( dstSize.x , dstSize.y , 0 , RenderTextureFormat.ARGB32 ) ;
             var rt = GraphicRenderTools.DrawMeshToTexture ( renderTexture , mesh , ModelMatrix , mat ) ;
 

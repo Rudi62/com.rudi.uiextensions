@@ -23,7 +23,7 @@ namespace Rudi.Core
 
         private FINISHED m_Callback = null ;
 
-        public static string getUrlFromFilePath ( string filepath ) => "file:///" + filepath;
+        public static string getUrlFromFilePath ( string filepath ) => new System.Uri ( System.IO.Path.GetFullPath ( filepath ) , UriKind.Absolute ) . AbsoluteUri ;
         public static TextureLoader Load ( string url , FINISHED callback ) => new TextureLoader ( url , callback );
         public static TextureLoader LoadFile ( string filepath , FINISHED callback ) => new TextureLoader ( getUrlFromFilePath ( filepath ) , callback );
 

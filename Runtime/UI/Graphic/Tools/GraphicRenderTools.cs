@@ -29,11 +29,27 @@ namespace Rudi.UI
         private static readonly List < Vector2 > s_UVs      = new () ;
 
         static private Matrix4x4 m_ModelMatrix = Matrix4x4.identity ;
+        static private Matrix4x4 getModelMatrix_ios_checked ( Vector2 mul , Vector2 add )
+        {
+            m_ModelMatrix.m00 = mul.x;
+            m_ModelMatrix.m03 = add.x;
+
+#if UNITY_IOS || UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
+            // Wird nur auf Apple-Plattformen und dem Mac-Editor kompiliert
+            m_ModelMatrix.m11 = -mul.y ;
+            m_ModelMatrix.m13 = 1f - add.y ;
+#else
+            m_ModelMatrix.m11 = mul.y;
+            m_ModelMatrix.m13 = add.y;
+#endif
+            return m_ModelMatrix;
+        }
+
         static private Matrix4x4 getModelMatrix ( Vector2 mul , Vector2 add )
         {
             m_ModelMatrix.m00 = mul.x ;
-            m_ModelMatrix.m11 = mul.y ;
             m_ModelMatrix.m03 = add.x ;
+            m_ModelMatrix.m11 = mul.y ;
             m_ModelMatrix.m13 = add.y ;
             return m_ModelMatrix ;
         }
@@ -74,6 +90,7 @@ namespace Rudi.UI
             var previous = RenderTexture.active ;
             RenderTexture.active = renderTexture ;
 
+
             if ( !material.SetPass ( 0 ) )
             {
                 RenderTexture.active = previous ;
@@ -82,9 +99,9 @@ namespace Rudi.UI
 
             GL.Color ( Color.white ) ;
             GL.PushMatrix () ;
+            GL.Clear ( false , true , Color.clear ) ; // fill transparent
             GL.LoadOrtho () ;
             GL.modelview = modelmatrix ;
-            GL.Clear ( false , true , Color.clear ) ; // fill transparent
 
             // start rendering
             GL.Begin ( GL.TRIANGLES ) ;
@@ -125,8 +142,8 @@ namespace Rudi.UI
         {
             if ( graphic == null || renderTexture == null ) return nullReturn ( "no data" ) ;
             var ModelMatrix = getModelMatrix ( graphic.rectTransform.rect , scale , offset ) ;
-            if ( !renderGraphic ( renderTexture , graphic , ModelMatrix ) ) return null;
-            return renderTexture;
+            if ( !renderGraphic ( renderTexture , graphic , ModelMatrix ) ) return null ;
+            return renderTexture ;
         }
 
         public static Vector2Int getBestTextureSize ( Graphic graphic , int borderPixels = 0 )
@@ -320,6 +337,8 @@ namespace Rudi.UI
             var previous = RenderTexture.active ;
             RenderTexture.active = renderTexture;
             material.mainTexture = graphic.mainTexture;
+
+
             if ( !material.SetPass ( 0 ) )
             {
                 Log.i ( TAG , "drawToTexture() - pass failed" );
@@ -331,6 +350,7 @@ namespace Rudi.UI
             //GL.Color ( Color.white ) ;
 
             GL.PushMatrix ();
+            GL.Clear ( false , true , Color.clear ); // fill transparent
 
             //Matrix4x4 projectionMatrix = GL.GetGPUProjectionMatrix ( ortho , true ) ;
             var projectionMatrix = ortho ;
@@ -367,7 +387,6 @@ namespace Rudi.UI
 
             //GL.LoadPixelMatrix ();
 
-            GL.Clear ( false , true , Color.clear ); // fill transparent
 
             var UseDrawMesh = false ;
             //UseDrawMesh = true;
