@@ -74,22 +74,16 @@ namespace Rudi.UI
 
         public static RenderTexture DrawMeshToTexture ( RenderTexture renderTexture , Mesh mesh , Matrix4x4 modelmatrix , Material material )
         {
-            // soonly alloc free
-            s_Vertices . Clear () ;
-            s_Indices  . Clear () ;
-            s_Colors   . Clear () ;
-            s_UVs      . Clear () ;
-
+            // realloc free after some calls
             mesh.GetVertices  ( s_Vertices    ) ;
             mesh.GetTriangles ( s_Indices , 0 ) ; // Submesh 0
             mesh.GetColors    ( s_Colors      ) ;
-            mesh.GetUVs       ( 0 , s_UVs     ) ;
+            mesh.GetUVs       ( 0 , s_UVs     ) ; // channel 0
 
             if ( s_Vertices.Count == 0 || s_Indices.Count == 0 ) return null ;
 
             var previous = RenderTexture.active ;
-            RenderTexture.active = renderTexture ;
-
+            RenderTexture.active = renderTexture ; // do this before material.SetPass!
 
             if ( !material.SetPass ( 0 ) )
             {
@@ -99,8 +93,8 @@ namespace Rudi.UI
 
             GL.Color ( Color.white ) ;
             GL.PushMatrix () ;
-            GL.Clear ( false , true , Color.clear ) ; // fill transparent
-            GL.LoadOrtho () ;
+            GL.Clear ( false , true , Color.clear ) ; // fill transparent, maybe destroy matrices...
+            GL.LoadOrtho () ;                         // sets modelview to identity!
             GL.modelview = modelmatrix ;
 
             // start rendering

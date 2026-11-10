@@ -122,10 +122,12 @@ namespace Rudi.Extensions
 
         private static bool isRootCanvas ( Canvas canvas )
         {
-            if ( !canvas.isActiveAndEnabled ) return false;
-            if ( canvas.isRootCanvas ) return true;
+            //if ( !canvas.isActiveAndEnabled ) return false;
+            //if ( canvas.GetInstanceID () == ScreenOrientationNotifier.id ) return false ;
+            //if ( canvas.isRootCanvas ) return true;
+            if ( Utils.isUsableRootCanvas ( canvas ) ) return true ;
             if ( canvas.overrideSorting ) return true;
-            return false;
+            return false ;
         }
 
         public static Canvas getRootCanvas ( this GameObject obj )
@@ -258,6 +260,9 @@ namespace Rudi.Extensions
         public static Vector3 GetHorizontal ( this Vector3 v ) => new Vector3 ( v.x , 0 , v.z );
         public static float minVal ( this Vector3 v ) => Mathf.Min ( v.x , Mathf.Min ( v.y , v.z ) ) ;
         public static float maxVal ( this Vector3 v ) => Mathf.Max ( v.x , Mathf.Max ( v.y , v.z ) ) ;
+        public static Vector3 GetClamped01 ( this Vector3 v ) => new Vector3 ( Mathf.Clamp01 ( v.x ) , Mathf.Clamp01 ( v.y ) , Mathf.Clamp01 ( v.z ) ) ;
+        public static Vector3 GetAbs ( this Vector3 v ) => new Vector3 ( Mathf.Abs ( v.x ) , Mathf.Abs ( v.y ) , Mathf.Abs ( v.z ) ) ;
+        public static Vector3 GetRCP ( this Vector3 v ) => new Vector3 ( 1f / v.x , 1f / v.y , 1f / v.z ) ;
     }
     public static class Vector4Extensions
     {
@@ -286,10 +291,8 @@ namespace Rudi.Extensions
 
     public static class RectTransformExtension
     {
-        public static readonly Vector2 Vec2Half = Vector2.one * 0.5f ;
-
         public static Vector2 PivotTo ( this RectTransform rt , Vector2 rel_pos ) => ( rel_pos - rt.pivot ) * rt.rect.size;
-        public static Vector2 PivotToCenter ( this RectTransform rt ) => rt.PivotTo ( Vec2Half );
+        public static Vector2 PivotToCenter ( this RectTransform rt ) => rt.PivotTo ( V2.half );
         public static Vector2 PivotToLL ( this RectTransform rt ) => rt.PivotTo ( Vector2.zero );
         public static Vector2 PivotToLR ( this RectTransform rt ) => rt.PivotTo ( Vector2.right );
         public static Vector2 PivotToTR ( this RectTransform rt ) => rt.PivotTo ( Vector2.one );
@@ -316,13 +319,13 @@ namespace Rudi.Extensions
             //rt.sizeDelta = Vector2.zero;
             //rt.pivot = Vector2.one * 0.5f;
             //rt.anchoredPosition = Vector2.zero ;
-            rt.pivot = Vec2Half;
+            rt.pivot = V2.half;
             rt.offsetMin = Vector2.zero;
             rt.offsetMax = Vector2.zero;
         }
         public static void SetZero ( this RectTransform rt )
         {
-            rt.pivot = Vec2Half;
+            rt.pivot = V2.half;
             rt.anchorMin = Vector2.zero;
             rt.anchorMax = Vector2.zero;
             rt.anchoredPosition = Vector2.zero;
@@ -351,7 +354,7 @@ namespace Rudi.Extensions
         }
         public static void SetFull ( this RectTransform rt , Vector4 margins )
         {
-            rt.pivot = Vec2Half;
+            rt.pivot = V2.half ;
             rt.anchorMin = Vector2.zero;
             rt.anchorMax = Vector2.one;
             rt.offsetMin = new Vector2 ( margins.x , margins.y );
@@ -360,7 +363,7 @@ namespace Rudi.Extensions
 
         public static void SetFull ( this RectTransform rt , float to_left , float to_right , float to_top , float to_bottom )
         {
-            rt.pivot = Vec2Half;
+            rt.pivot = V2.half ;
             rt.anchorMin = Vector2.zero;
             rt.anchorMax = Vector2.one;
             rt.offsetMin = new Vector2 ( to_left , to_bottom );
@@ -410,13 +413,21 @@ namespace Rudi.Extensions
 
         private static void setStretched ( RectTransform rt , float left , float top , float right , float bottom )
         {
-            rt.anchorMin = new Vector2 ( 0 , 0 );
-            rt.anchorMax = new Vector2 ( 1 , 1 );
-            rt.pivot = new Vector2 ( 0.5f , 0.5f );
+            rt.anchorMin = Vector2.zero ;
+            rt.anchorMax = Vector2.one ;
+            rt.pivot     = V2.half ;
             rt.sizeDelta = Vector2.zero; // necessary..? found in DefaultControls.cs
-            rt.offsetMin = new Vector2 ( left , bottom );
-            rt.offsetMax = new Vector2 ( -right , -top );
+            rt.offsetMin = new Vector2 ( left , bottom ) ;
+            rt.offsetMax = new Vector2 ( -right , -top ) ;
         }
+
+        public static void setAnchors ( this RectTransform rt , Vector2 min_max )
+        {
+            rt.anchorMin = min_max ;
+            rt.anchorMax = min_max ;
+        }
+
+        public static void setAnchors ( this RectTransform rt , float vx , float vy ) => setAnchors ( rt , new Vector2 ( vx , vy ) ) ;
 
         public static void top_left ( this RectTransform rt , float pos_x , float pos_y , float width , float height ) => setStd ( rt , 0 , 1 , pos_x , pos_y , width , height );
         public static void top_center ( this RectTransform rt , float pos_x , float pos_y , float width , float height ) => setStd ( rt , 0.5f , 1 , pos_x , pos_y , width , height );
@@ -578,6 +589,12 @@ namespace Rudi.Extensions
         {
             transform.localScale = new Vector3 ( scale , scale , scale );
         }
+    }
+    public static class QuaternionExtension
+    {
+        public static Quaternion getRotX ( float x ) => Quaternion.Euler ( x , 0 , 0 ) ;
+        public static Quaternion getRotY ( float y ) => Quaternion.Euler ( 0 , y , 0 ) ;
+        public static Quaternion getRotZ ( float z ) => Quaternion.Euler ( 0 , 0 , z ) ;
     }
     public static class Texture2DExtension
     {
@@ -817,25 +834,25 @@ namespace Rudi.Extensions
 
     public static class ComponentExtension
     {
-        public static T getComponentIfZero<T> ( this UnityEngine.Component myComp , ref T comp ) //where T : UnityEngine.Component
+        public static T getComponentIfZero<T> ( this UnityEngine.Component comp , ref T variable ) //where T : UnityEngine.Component
         {
-            if ( null == comp ) comp = myComp.GetComponent<T> ();
-            return comp;
+            if ( null == variable ) variable = comp.GetComponent<T> ();
+            return variable;
         }
-        public static T getComponentInParentIfZero<T> ( this UnityEngine.Component myComp , ref T comp ) //where T : UnityEngine.Component
+        public static T getComponentInParentIfZero<T> ( this UnityEngine.Component comp , ref T variable ) //where T : UnityEngine.Component
         {
-            if ( null == comp ) comp = myComp.GetComponentInParent<T> ();
-            return comp;
+            if ( null == variable ) variable = comp.GetComponentInParent<T> ();
+            return variable;
         }
-        public static T getComponentInChildrenIfZero<T> ( this UnityEngine.Component myComp , ref T comp )// where T : UnityEngine.Component
+        public static T getComponentInChildrenIfZero<T> ( this UnityEngine.Component comp , ref T variable )// where T : UnityEngine.Component
         {
-            if ( null == comp ) comp = myComp.GetComponentInChildren<T> ();
-            return comp;
+            if ( null == variable ) variable = comp.GetComponentInChildren<T> ();
+            return variable;
         }
-        public static T [ ] getComponentsInChildrenIfZero<T> ( this UnityEngine.Component myComp , ref T [ ] comp , bool includeInactive = false ) //where T : UnityEngine.Component
+        public static T [ ] getComponentsInChildrenIfZero<T> ( this UnityEngine.Component comp , ref T [ ] variable_array , bool includeInactive = false ) //where T : UnityEngine.Component
         {
-            if ( null == comp ) comp = myComp.GetComponentsInChildren<T> ( includeInactive );
-            return Utils.hasData ( comp ) ? comp : null;
+            if ( null == variable_array ) variable_array = comp.GetComponentsInChildren<T> ( includeInactive );
+            return Utils.hasData ( variable_array ) ? variable_array : null;
         }
     }
 

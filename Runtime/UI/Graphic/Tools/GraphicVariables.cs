@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using Rudi.Core;
 using UnityEngine;
 using UnityEngine.Pool;
 using UnityEngine.UI;
@@ -142,8 +143,10 @@ namespace Rudi.UI
                 // Find the first active and enabled canvas.
                 for ( var i = 0 ; i < list.Count ; ++i )
                 {
-                    if ( !list [i].isActiveAndEnabled ) continue;
-                    if ( !list [i].isRootCanvas ) continue;
+                    if ( !Utils.isUsableRootCanvas ( list [i] ) ) continue ;
+                    //if ( !list [i].isActiveAndEnabled ) continue;
+                    //if ( !list [i].isRootCanvas ) continue;
+                    //if ( list [i].GetInstanceID () == ScreenOrientationNotifier.id ) continue ;
                     Result = list [i];
                     break;
                 }

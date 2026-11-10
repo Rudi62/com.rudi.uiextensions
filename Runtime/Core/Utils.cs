@@ -71,6 +71,30 @@ namespace Rudi.Core
     {
         private static readonly string TAG = "RudisUtils";
 
+        public static bool UpdateProperty<T> ( ref T currentValue , T newValue )
+        {
+            // Die JIT-Pipeline eliminiert diesen Zweig für Structs komplett zur Laufzeit:
+            if ( !typeof ( T ).IsValueType )
+            {
+                if ( ReferenceEquals ( currentValue , newValue ) )
+                    return false;
+            }
+
+            if ( System.Collections.Generic.EqualityComparer<T>.Default.Equals ( currentValue , newValue ) )
+                return false;
+
+            currentValue = newValue ;
+            return true ;
+        }
+
+        private static void ExitApp ()
+        {
+            Application.Quit () ;
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false ;
+#endif
+        }
+
         private static readonly WaitForEndOfFrame s_WaitForEndOfFrame = new WaitForEndOfFrame () ;
         public static WaitForEndOfFrame WaitForEndOfFrame => s_WaitForEndOfFrame ;
         static public void DestroyObject ( UnityEngine.Object obj )
@@ -318,20 +342,33 @@ namespace Rudi.Core
             return null;
         }
 
+        public static T handOver < T > ( ref T v )
+        {
+            T t = v ;
+            v = default ;
+            return t ;
+        }
+
+        public static bool isUsableRootCanvas ( Canvas canvas )
+        {
+            if ( !canvas.isActiveAndEnabled ) return false ;
+            if ( !canvas.isRootCanvas ) return false ;
+            //if ( canvas.GetInstanceID () == ScreenControl.id ) return false ;
+            return true ;
+        }
+
         public static Canvas findRootCanvas ()
         {
             var Objects = UnityEngine.Object.FindObjectsByType < Canvas > ( FindObjectsInactive.Exclude , FindObjectsSortMode.None ) ;
-            if ( null == Objects ) return nullReturn<Canvas> ( "no canvas objects found" );
+            if ( null == Objects ) return nullReturn < Canvas > ( "no canvas objects found" ) ;
             foreach ( var cv in Objects )
             {
-                if ( !cv.isActiveAndEnabled ) continue;
-                if ( !cv.isRootCanvas ) continue;
-                return cv;
+                if ( isUsableRootCanvas ( cv ) ) return cv ;
             }
-            return null;
+            return null ;
         }
 
-        private static T [ ] FindObjectsByType<T> ( FindObjectsInactive exclude , FindObjectsSortMode none )
+        private static T [ ] FindObjectsByType < T > ( FindObjectsInactive exclude , FindObjectsSortMode none )
         {
             throw new NotImplementedException ();
         }
@@ -771,8 +808,6 @@ namespace Rudi.Core
 #endif
         }
 
-        //private static int getrate ( RefreshRate rate )
-
         public static int nativeFramerate // => m_NativeFrameRate ;
         {
             get
@@ -785,28 +820,18 @@ namespace Rudi.Core
                     // Print the resolutions
                     foreach ( var res in resolutions )
                     {
-                        if ( res.width != curres.width ) continue;
-                        if ( res.height != curres.height ) continue;
+                        if ( res.width != curres.width ) continue ;
+                        if ( res.height != curres.height ) continue ;
                         var FrameRate = ( int ) res.refreshRateRatio.value ;
-                        if ( FrameRate > MaxFrameRate ) MaxFrameRate = FrameRate;
-                        MaxFrameRate = Mathf.Max ( MaxFrameRate , ( int ) res.refreshRateRatio.value );
+                        MaxFrameRate = Mathf.Max ( MaxFrameRate , FrameRate ) ;
                     }
-                    m_NativeFrameRate = MaxFrameRate;
-                    Log.i ( TAG , "MaxFrameRate = " + MaxFrameRate );
+                    m_NativeFrameRate = MaxFrameRate ;
+                    Log.i ( TAG , "MaxFrameRate = " + MaxFrameRate ) ;
                 }
-                return m_NativeFrameRate;
+                return m_NativeFrameRate ;
             }
         }
-        //private static int getNativeFrameRate ()
-        //{
-        //    int fr = ( int ) Screen.currentResolution.refreshRateRatio.value ;
-        //    Log.i ( TAG , $"native framerate = { fr } hz" ) ;
-        //    return fr ;
-        //}
-        //private static int getMaxFrameRate ()
-        //{
 
-        //}
         private static int getFPS ( FrameRates framerate )
         {
             if ( FrameRates.fps_max == framerate ) return nativeFramerate;

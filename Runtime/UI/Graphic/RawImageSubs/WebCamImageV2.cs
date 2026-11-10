@@ -23,7 +23,6 @@ namespace Rudi
 
         public WebcamStartedEvent camStarted => m_WebcamStarted ;
 
-
         public enum Quality
         {
             SD  ,
@@ -67,7 +66,10 @@ namespace Rudi
 			}
 		}
 
-		public void setup ( string cameraName , int width , int height )
+        public bool isPlaying => ( null != webCamTexture && webCamTexture.isPlaying ) ;
+
+
+        public void setup ( string cameraName , int width , int height )
 		{
 			bool isPlaying = webCamTexture.isPlaying ;
 			if ( isPlaying ) webCamTexture.Stop () ;
@@ -85,17 +87,24 @@ namespace Rudi
 		{
 			do { yield return Utils.WaitForEndOfFrame ; } while ( !webCamTexture.didUpdateThisFrame ) ;
 			adjustAppearance () ;
-		}
+            m_WebcamStarted.Invoke ( true ) ;
+        }
 
-		private void adjustAppearance ()
+
+        private void adjustAppearance ()
 		{
 			webCamTexture.filterMode = FilterMode.Bilinear ;
 			rotation = - ( webCamTexture.videoRotationAngle / 90 ) ;
 			mirrorV = webCamTexture.videoVerticallyMirrored ;
             SetMaterialDirty () ;
 			SetVerticesDirty () ;
-            m_WebcamStarted.Invoke ( true ) ;
         }
+
+        public void readjust ()
+        {
+            adjustAppearance () ;
+        }
+
 		private void startPlaying ()
 		{
 			if ( null != webCamTexture && !webCamTexture.isPlaying )
@@ -162,15 +171,27 @@ namespace Rudi
 			}
 			texture = null ;
 		}
-		protected override void OnEnable ()
+
+        private void OnOrientationChanged ()
+        {
+            if ( isPlaying )
+            {
+                readjust () ;
+            }
+        }
+
+
+        protected override void OnEnable ()
 		{
-			if ( play ) startPlaying () ;
+            ScreenControl.AddListener ( OnOrientationChanged ) ;
+            if ( play ) startPlaying () ;
 			base.OnEnable () ;
 		}
 
 		protected override void OnDisable ()
 		{
-			stopPlaying () ;
+            ScreenControl.RemoveListener ( OnOrientationChanged ) ;
+            stopPlaying () ;
 			base.OnDisable () ;
 		}
 		protected override void OnDestroy ()
