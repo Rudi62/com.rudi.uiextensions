@@ -85,17 +85,18 @@ namespace Rudi.UI
             var previous = RenderTexture.active ;
             RenderTexture.active = renderTexture ; // do this before material.SetPass!
 
-            if ( !material.SetPass ( 0 ) )
-            {
-                RenderTexture.active = previous ;
-                return null ;
-            }
-
-            GL.Color ( Color.white ) ;
             GL.PushMatrix () ;
             GL.Clear ( false , true , Color.clear ) ; // fill transparent, maybe destroy matrices...
             GL.LoadOrtho () ;                         // sets modelview to identity!
             GL.modelview = modelmatrix ;
+            GL.Color ( Color.white ) ;
+
+            if ( !material.SetPass ( 0 ) )
+            {
+                GL.PopMatrix () ;
+                RenderTexture.active = previous ;
+                return null ;
+            }
 
             // start rendering
             GL.Begin ( GL.TRIANGLES ) ;
