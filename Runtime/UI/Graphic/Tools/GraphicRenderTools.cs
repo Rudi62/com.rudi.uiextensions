@@ -29,21 +29,21 @@ namespace Rudi.UI
         private static readonly List < Vector2 > s_UVs      = new () ;
 
         static private Matrix4x4 m_ModelMatrix = Matrix4x4.identity ;
-        static private Matrix4x4 getModelMatrix_ios_checked ( Vector2 mul , Vector2 add )
-        {
-            m_ModelMatrix.m00 = mul.x;
-            m_ModelMatrix.m03 = add.x;
+//        static private Matrix4x4 getModelMatrix_ios_checked ( Vector2 mul , Vector2 add )
+//        {
+//            m_ModelMatrix.m00 = mul.x;
+//            m_ModelMatrix.m03 = add.x;
 
-#if UNITY_IOS || UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
-            // Wird nur auf Apple-Plattformen und dem Mac-Editor kompiliert
-            m_ModelMatrix.m11 = -mul.y ;
-            m_ModelMatrix.m13 = 1f - add.y ;
-#else
-            m_ModelMatrix.m11 = mul.y;
-            m_ModelMatrix.m13 = add.y;
-#endif
-            return m_ModelMatrix;
-        }
+//#if UNITY_IOS || UNITY_STANDALONE_OSX || UNITY_EDITOR_OSX
+//            // Wird nur auf Apple-Plattformen und dem Mac-Editor kompiliert
+//            m_ModelMatrix.m11 = -mul.y ;
+//            m_ModelMatrix.m13 = 1f - add.y ;
+//#else
+//            m_ModelMatrix.m11 = mul.y;
+//            m_ModelMatrix.m13 = add.y;
+//#endif
+//            return m_ModelMatrix;
+//        }
 
         static private Matrix4x4 getModelMatrix ( Vector2 mul , Vector2 add )
         {
@@ -170,6 +170,16 @@ namespace Rudi.UI
             return Result ;
         }
 
+        public static Texture2D MeshToTexture ( Vector2Int dstSize , Mesh mesh , Rect rect , Material material , TextureFormat format = TextureFormat.RGBA32 )
+        {
+            if ( !dstSize.hasArea () || null == mesh || null == material ) return null;
+
+            var rt = RenderTexture.GetTemporary ( dstSize.x , dstSize.y , 0 , RenderTextureFormat.ARGB32 ) ;
+            var drawn = DrawMeshToTexture ( rt , mesh , getModelMatrix ( rect ) , material ) ;
+            Texture2D result = ( null != drawn ) ? ToTexture ( drawn , format ) : null ;
+            RenderTexture.ReleaseTemporary ( rt );
+            return result;
+        }
 
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // used by SoftShadow

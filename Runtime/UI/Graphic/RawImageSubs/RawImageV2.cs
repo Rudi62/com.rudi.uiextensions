@@ -1121,43 +1121,74 @@ namespace Rudi.UI
                 Log.i ( TAG , $"vert [ {i} ] : { vertices[i] } , uv : { texcoords[i] }" ) ;
             }
         }
-
         public Texture2D getImageAsTexture ( bool native = true )
         {
-            var mesh = getMesh () ;
-            if ( !mesh ) return null ;
-            Material mat = new Material ( material ) ;
-            mat.mainTexture = mainTexture ;
-            if ( native )
-            {
-                mat.EnableKeyword ( "ROUND_CORNERS"    , false ) ;
-                mat.EnableKeyword ( "MAP_CORNER_ALPHA" , false ) ;
-                mat.EnableKeyword ( "DRAW_BORDER"      , false ) ;
-            }
-
             var dstSize = numPixels_rotated_cropped ;
             if ( !dstSize.hasArea () )
             {
-                log ( "bad size: " + dstSize ) ;
+                log ( "bad size: " + dstSize );
                 return null;
             }
 
-            var ModelMatrix = GraphicRenderTools.getModelMatrix ( rectTransform.rect ) ;
+            var mesh = getMesh () ;
+            if ( !mesh ) return null;
 
-            if ( DeviceEnvironment.IsAppleMetalPlatform && false )
+            var mat = matRoundedCorner ;
+            if ( null == mat ) return null;
+
+            updateCornerMaterial ( mat );
+            mat.mainTexture = mainTexture;
+            if ( native )
             {
-                ModelMatrix.m11 *= -1f;
-                ModelMatrix.m13 = 1f - ModelMatrix.m13;
+                mat.EnableKeyword ( "ROUND_CORNERS" , false );
+                mat.EnableKeyword ( "MAP_CORNER_ALPHA" , false );
+                mat.EnableKeyword ( "DRAW_BORDER" , false );
+                mat.EnableKeyword ( "DROP_SHADOW" , false );
             }
-            RenderTexture renderTexture = RenderTexture.GetTemporary ( dstSize.x , dstSize.y , 0 , RenderTextureFormat.ARGB32 ) ;
-            var rt = GraphicRenderTools.DrawMeshToTexture ( renderTexture , mesh , ModelMatrix , mat ) ;
 
-            Texture2D Result = null ;
-            if ( rt != null ) Result = GraphicRenderTools.ToTexture ( rt ) ;
-            RenderTexture.ReleaseTemporary ( renderTexture ) ;
-            Utils.DestroyObject ( mat ) ;
-            return Result ;
+            var result = GraphicRenderTools.MeshToTexture ( dstSize , mesh , rectTransform.rect , mat ) ;
+
+            mat.mainTexture = null;
+            if ( native ) updateCornerMaterial ( mat );
+            return result;
         }
+
+        //public Texture2D getImageAsTexture_old ( bool native = true )
+        //{
+        //    var mesh = getMesh () ;
+        //    if ( !mesh ) return null ;
+        //    Material mat = new Material ( material ) ;
+        //    mat.mainTexture = mainTexture ;
+        //    if ( native )
+        //    {
+        //        mat.EnableKeyword ( "ROUND_CORNERS"    , false ) ;
+        //        mat.EnableKeyword ( "MAP_CORNER_ALPHA" , false ) ;
+        //        mat.EnableKeyword ( "DRAW_BORDER"      , false ) ;
+        //    }
+
+        //    var dstSize = numPixels_rotated_cropped ;
+        //    if ( !dstSize.hasArea () )
+        //    {
+        //        log ( "bad size: " + dstSize ) ;
+        //        return null;
+        //    }
+
+        //    var ModelMatrix = GraphicRenderTools.getModelMatrix ( rectTransform.rect ) ;
+
+        //    if ( DeviceEnvironment.IsAppleMetalPlatform && false )
+        //    {
+        //        ModelMatrix.m11 *= -1f;
+        //        ModelMatrix.m13 = 1f - ModelMatrix.m13;
+        //    }
+        //    RenderTexture renderTexture = RenderTexture.GetTemporary ( dstSize.x , dstSize.y , 0 , RenderTextureFormat.ARGB32 ) ;
+        //    var rt = GraphicRenderTools.DrawMeshToTexture ( renderTexture , mesh , ModelMatrix , mat ) ;
+
+        //    Texture2D Result = null ;
+        //    if ( rt != null ) Result = GraphicRenderTools.ToTexture ( rt ) ;
+        //    RenderTexture.ReleaseTemporary ( renderTexture ) ;
+        //    Utils.DestroyObject ( mat ) ;
+        //    return Result ;
+        //}
 
 
         protected override void OnDestroy ()
