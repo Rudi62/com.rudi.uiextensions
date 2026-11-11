@@ -8,7 +8,7 @@ using UnityEngine.UI;
 
 namespace Rudi.UI
 {
-    [RequireComponent ( typeof ( RawImage ) )]
+    [RequireComponent ( typeof ( RawImage ) ) ]
     [ExecuteInEditMode]
     [DisallowMultipleComponent]
 

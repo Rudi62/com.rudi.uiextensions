@@ -1142,11 +1142,11 @@ namespace Rudi.UI
                 return null;
             }
             var ModelMatrix = GraphicRenderTools.getModelMatrix ( rectTransform.rect ) ;
-            if ( DeviceEnvironment.IsAppleMetalPlatform )
-            {
-                ModelMatrix.m11 *= -1f ;
-                ModelMatrix.m13 = 1f - ModelMatrix.m13 ;
-            }
+            //if ( DeviceEnvironment.IsAppleMetalPlatform )
+            //{
+            //    ModelMatrix.m11 *= -1f ;
+            //    ModelMatrix.m13 = 1f - ModelMatrix.m13 ;
+            //}
             RenderTexture renderTexture = RenderTexture.GetTemporary ( dstSize.x , dstSize.y , 0 , RenderTextureFormat.ARGB32 ) ;
             var rt = GraphicRenderTools.DrawMeshToTexture ( renderTexture , mesh , ModelMatrix , mat ) ;
 
