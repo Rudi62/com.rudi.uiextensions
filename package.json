@@ -1,6 +1,6 @@
 {
   "name": "com.rudi.uiextensions",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "displayName": "Rudis UI Extensions",
   "description": "Schatten-Effekte, Glaselemente und UI-Shader.",
   "unity": "6000.0",

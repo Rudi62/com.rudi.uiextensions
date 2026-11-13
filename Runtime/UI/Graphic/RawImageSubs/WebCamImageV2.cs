@@ -22,6 +22,12 @@ namespace Rudi
         [ SerializeField ] private WebcamStartedEvent m_WebcamStarted = new () ;
 
         public WebcamStartedEvent camStarted => m_WebcamStarted ;
+        private const float OrientationWatchDuration = 1.0f ;
+        private Coroutine m_AdjustCoroutine      = null ;
+        private Coroutine m_WatchCoroutine       = null ;
+        private float     m_WatchUntilTime       = 0f ;
+        private int       m_AppliedVideoAngle    = -1 ;
+        private bool      m_AppliedVideoMirrored = false ;
 
         public enum Quality
         {
@@ -71,51 +77,129 @@ namespace Rudi
 
         public void setup ( string cameraName , int width , int height )
 		{
-			bool isPlaying = webCamTexture.isPlaying ;
-			if ( isPlaying ) webCamTexture.Stop () ;
-			webCamTexture.deviceName = cameraName ;
-			webCamTexture.requestedWidth = width ;
-			webCamTexture.requestedHeight = height ;
-			if ( isPlaying )
-			{
-				webCamTexture.Play () ;
-				StartCoroutine ( adjust_Coroutine () ) ;
-			}
-		}
+            bool wasPlaying = isPlaying ;
+            if ( wasPlaying ) stopCoroutinesAndCam () ;
+            webCamTexture.deviceName = cameraName ;
+            webCamTexture.requestedWidth = width ;
+            webCamTexture.requestedHeight = height ;
+            if ( wasPlaying ) startPlaying () ;
+        }
 
-		IEnumerator adjust_Coroutine ()
+        IEnumerator adjust_Coroutine ()
 		{
 			do { yield return Utils.WaitForEndOfFrame ; } while ( !webCamTexture.didUpdateThisFrame ) ;
-			adjustAppearance () ;
+            m_AdjustCoroutine = null ;
+            if ( !isPlaying ) yield break ;
+
+            updateAppearanceIfNeeded ( force: true ) ;
             m_WebcamStarted.Invoke ( true ) ;
+
+            // Fängt gleichzeitigen Orientierungswechsel beim Session-Start ab:
+            startWatchingOrientation ();
         }
 
-
-        private void adjustAppearance ()
-		{
-			webCamTexture.filterMode = FilterMode.Bilinear ;
-			rotation = - ( webCamTexture.videoRotationAngle / 90 ) ;
-			mirrorV = webCamTexture.videoVerticallyMirrored ;
-            SetMaterialDirty () ;
-			SetVerticesDirty () ;
-        }
-
-        public void readjust ()
+        private void startWatchingOrientation ()
         {
-            adjustAppearance () ;
+            if ( !isActiveAndEnabled || !isPlaying ) return;
+            m_WatchUntilTime = Time.unscaledTime + OrientationWatchDuration;
+            if ( null == m_WatchCoroutine )
+            {
+                m_WatchCoroutine = StartCoroutine ( watchOrientation_Coroutine () );
+            }
+        }
+        private IEnumerator watchOrientation_Coroutine ()
+        {
+            updateAppearanceIfNeeded () ;
+
+            while ( isPlaying && Time.unscaledTime < m_WatchUntilTime )
+            {
+                yield return null ;
+                if ( null != m_WebCamTexture && m_WebCamTexture.didUpdateThisFrame )
+                {
+                    updateAppearanceIfNeeded () ;
+                }
+            }
+
+            m_WatchCoroutine = null ;
+        }
+        private bool updateAppearanceIfNeeded ( bool force = false )
+        {
+            if ( null == m_WebCamTexture ) return false ;
+
+            int  angle    = m_WebCamTexture.videoRotationAngle ;
+            bool mirrored = m_WebCamTexture.videoVerticallyMirrored ;
+
+            if ( !force && angle == m_AppliedVideoAngle && mirrored == m_AppliedVideoMirrored )
+            {
+                return false ;
+            }
+
+            m_AppliedVideoAngle = angle ;
+            m_AppliedVideoMirrored = mirrored ;
+
+            m_WebCamTexture.filterMode = FilterMode.Bilinear ;
+            rotation = -( angle / 90 ) ;
+            mirrorV = mirrored ;
+            SetMaterialDirty () ;
+            SetVerticesDirty () ;
+            return true ;
+        }
+        private void adjustAppearance () => updateAppearanceIfNeeded ( force: true ) ;
+
+        public void readjust () => updateAppearanceIfNeeded ( force: true ) ;
+
+        private void stopCoroutines ()
+        {
+            if ( null != m_AdjustCoroutine )
+            {
+                StopCoroutine ( m_AdjustCoroutine );
+                m_AdjustCoroutine = null;
+            }
+            if ( null != m_WatchCoroutine )
+            {
+                StopCoroutine ( m_WatchCoroutine );
+                m_WatchCoroutine = null;
+            }
         }
 
-		private void startPlaying ()
+        //      private void adjustAppearance ()
+        //{
+        //	webCamTexture.filterMode = FilterMode.Bilinear ;
+        //	rotation = - ( webCamTexture.videoRotationAngle / 90 ) ;
+        //	mirrorV = webCamTexture.videoVerticallyMirrored ;
+        //          SetMaterialDirty () ;
+        //	SetVerticesDirty () ;
+        //      }
+
+        //public void readjust ()
+        //{
+        //    adjustAppearance () ;
+        //}
+        private void stopCoroutinesAndCam ()
+        {
+            stopCoroutines ();
+            if ( null != m_WebCamTexture && m_WebCamTexture.isPlaying )
+            {
+                m_WebCamTexture.Stop () ;
+            }
+        }
+
+        private void startPlaying ()
 		{
 			if ( null != webCamTexture && !webCamTexture.isPlaying )
 			{
-                //Log.i ( TAG , "start play" );
-                webCamTexture.Play () ;
-                //Log.i ( TAG , "back from play" );
-                StartCoroutine ( adjust_Coroutine () ) ;
-				texture = webCamTexture ;
-			}
-		}
+                stopCoroutines ();
+                m_AppliedVideoAngle = -1;
+                m_WebCamTexture.Play ();
+                texture = m_WebCamTexture;
+                m_AdjustCoroutine = StartCoroutine ( adjust_Coroutine () );
+                //            //Log.i ( TAG , "start play" );
+                //            webCamTexture.Play () ;
+                //            //Log.i ( TAG , "back from play" );
+                //            StartCoroutine ( adjust_Coroutine () ) ;
+                //texture = webCamTexture ;
+            }
+        }
 
         private static ( int width , int height ) getResolution ( Quality quality )
         {
@@ -130,30 +214,32 @@ namespace Rudi
 
         public void startPlaying ( Quality quality )
         {
-#if !UNITY_EDITOR1
-            //Log.i ( TAG , $"startPlaying ( { quality } )" ) ;
-            if ( webCamTexture.isPlaying ) webCamTexture.Stop () ;
+            if ( !DeviceEnvironment.IsInEditor )
+            {
+                if ( isPlaying ) stopCoroutinesAndCam () ;
 
-            if ( quality == Quality.Max )
-            {
-                var id = Webcams.bestWebCam ;
-                webCamTexture.deviceName      = id.name   ;
-                webCamTexture.requestedWidth  = id.width  ;
-                webCamTexture.requestedHeight = id.height ;
+                if ( quality == Quality.Max )
+                {
+                    var id = Webcams.bestWebCam ;
+                    webCamTexture.deviceName      = id.name   ;
+                    webCamTexture.requestedWidth  = id.width  ;
+                    webCamTexture.requestedHeight = id.height ;
+                }
+                else
+                {
+                    var res = getResolution ( quality ) ;
+                    webCamTexture.requestedWidth  = res.width  ;
+                    webCamTexture.requestedHeight = res.height ;
+                }
+
             }
-            else
-            {
-                var res = getResolution ( quality ) ;
-                webCamTexture.requestedWidth  = res.width  ;
-                webCamTexture.requestedHeight = res.height ;
-            }
-#endif
             startPlaying () ;
         }
 
         public void startPlaying ( Webcams.Identifier identifier )
         {
-            if ( webCamTexture.isPlaying ) webCamTexture.Stop ();
+            if ( isPlaying ) stopCoroutinesAndCam () ;
+            //if ( webCamTexture.isPlaying ) webCamTexture.Stop ();
             webCamTexture.deviceName      = identifier.name   ;
             webCamTexture.requestedWidth  = identifier.width  ;
             webCamTexture.requestedHeight = identifier.height ;
@@ -163,9 +249,11 @@ namespace Rudi
 
         private void stopPlaying ()
 		{
-			if ( null != webCamTexture && webCamTexture.isPlaying )
+            stopCoroutines ();
+            m_AppliedVideoAngle = -1;
+            if ( null != m_WebCamTexture && webCamTexture.isPlaying )
 			{
-				webCamTexture.Stop () ;
+                m_WebCamTexture.Stop () ;
 				SetMaterialDirty () ;
 				SetVerticesDirty () ;
 			}
@@ -176,7 +264,8 @@ namespace Rudi
         {
             if ( isPlaying )
             {
-                readjust () ;
+                startWatchingOrientation () ;
+                //readjust () ;
             }
         }
 

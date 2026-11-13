@@ -17,10 +17,12 @@ namespace Rudi
         private const float  kWidth         = 160f ;
         private const float  kThickHeight   =  30f ;
         private const float  kThinHeight    =  20f ;
+        private const float  kLineHeight    =  5f ;
         private const float  kDefaultBorderWidth   = 1.1f ;
         //private const float  kLindsayHeight =  28f ;
         private static readonly Vector2 s_ThickElementSize       = new Vector2 ( kWidth , kThickHeight   ) ;
         private static readonly Vector2 s_ThinElementSize        = new Vector2 ( kWidth , kThinHeight    ) ;
+        private static readonly Vector2 s_LineElementSize        = new Vector2 ( kWidth , kLineHeight    ) ;
         //private static readonly Vector2 s_LindsayElementSize   = new Vector2 ( kWidth , kLindsayHeight ) ;
         private static readonly Vector2 s_ImageElementSize       = new Vector2 ( 100f , 100f ) ;
         private static readonly Color   s_DefaultSelectableColor = new Color32 ( 255 , 255 , 255 , 255 ) ;
@@ -263,6 +265,7 @@ namespace Rudi
         const string NameDropDown        = "Dropdown"          ;
         const string NameInputField      = "InputField"        ;
         const string NamScrollbar        = "Scrollbar"         ;
+        const string NameDottedLine      = "Dotted Line"       ;
 
         const int DropdownSlot = 2 ;
 
@@ -334,8 +337,18 @@ namespace Rudi
         [ MenuItem ( MenuLineUI + NameGlassShadowed , true  , Priority + 9 ) ] static bool ValiateGlassSh () => hasSelectionCanvas () ;
         [ MenuItem ( MenuLineUI + NameGlassShadowed , false , Priority + 9 ) ] static void MenuCreateGlassSh ( MenuCommand menuCommand ) => CreateControl ( menuCommand , CreateGlass ( true ) ) ;
 
+        // glass
+        [ MenuItem ( MenuLineUI + NameDottedLine , true  , Priority + 9 ) ] static bool ValiateDottedLine () => hasSelectionCanvas () ;
+        [ MenuItem ( MenuLineUI + NameDottedLine , false , Priority + 9 ) ] static void MenuCreateDottedLine ( MenuCommand menuCommand ) => CreateControl ( menuCommand , CreateDottedLine () ) ;
+
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // menu controls
+
+        static GameObject CreateDottedLine ()
+        {
+            GameObject dottedLine = CreateUIElementRoot ( NameDottedLine , s_LineElementSize  , typeof ( DottedLine ) ) ;
+            return dottedLine ;
+        }
 
         // Scrollbar
         static GameObject CreateScrollbar ()

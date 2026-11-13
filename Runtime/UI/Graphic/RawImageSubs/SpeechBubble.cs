@@ -617,20 +617,6 @@ namespace Rudi.UI
             }
         }
 
-        //private MaterialRoundedCorner m_MaterialRoundedCorner = null ;
-        //private MaterialRoundedCorner matRoundedCorner
-        //{
-        //    get
-        //    {
-        //        if ( null == m_MaterialRoundedCorner )
-        //        {
-        //            m_MaterialRoundedCorner = new MaterialRoundedCorner ();
-        //            m_MaterialRoundedCorner.radius = m_CornerRadius;
-        //        }
-        //        return m_MaterialRoundedCorner;
-        //    }
-        //}
-
         private static readonly string materialName = "Rudi/UI/SpeechBubble" ;
 
         private Material m_MaterialSpeechBubble = null ;
